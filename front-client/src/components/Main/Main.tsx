@@ -6,7 +6,7 @@ import MainCreateRoom from "./MainCreateRoom";
 import Tag from "./Tag";
 
 function Main(): JSX.Element {
-  const [createRoom, setCreateRoom] = useState(false);
+  // const [createRoom, setCreateRoom] = useState(false);
 
   const checkMenuState: any = useSelector((state: any) => {
     return state.menuClickCheck;
@@ -28,7 +28,7 @@ function Main(): JSX.Element {
   }
   return (
     <div className="">
-      {createRoom ? <MainCreateRoom /> : null}
+      {/* {createRoom ? <MainCreateRoom /> : null} */}
       <Navbar />
       <div
         style={{

@@ -27,6 +27,17 @@
   0 0 35px #A63268;
 
 }
+.selectHover {
+  cursor: pointer;
+}
+
+.selectHover:hover {
+  box-shadow: 0 0 5px #A63268,
+  0 0 10px #A63268,
+  0 0 15px #A63268,
+  0 0 25px #A63268;
+}
+
 .selectBtn {
   color: #e94b94;
 
