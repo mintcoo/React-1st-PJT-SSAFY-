@@ -5,9 +5,10 @@ import Main from "./components/Main/Main";
 import SignUp from "./components/SignUp/Signup";
 import Login from "./components/Login/Login";
 import MainCreateRoom from "./components/Main/MainCreateRoom";
+import LayoutPage from "./components/Common/LayoutPage";
 function App() {
   return (
-    <div className="App">
+    <div className="App bg-black">
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/signup" element={<SignUp />} />
