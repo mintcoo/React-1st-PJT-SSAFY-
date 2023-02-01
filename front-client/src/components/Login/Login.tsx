@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 import axios from "axios";
+import { url } from "inspector";
 
 function Login(): React.ReactElement {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   // 아래 처럼 하면 되는데.. 중간에 오류저거 못고치겠어서 우선 any
   // const scrollDivRef = useRef<HTMLDivElement>(null);
 
@@ -34,9 +35,8 @@ function Login(): React.ReactElement {
       wordSecond.current.classList.toggle(`delay-500`);
       wordThird.current.classList.toggle(`delay-1000`);
       elements.forEach((element) => {
-        element.current.classList.toggle(`delay-[1300ms]`)
-      })
-
+        element.current.classList.toggle(`delay-[1300ms]`);
+      });
     } else if (deltaY < 0) {
       // console.log("456", deltaY, scrollTop, pageHeight);
       firstDiv.current.scrollIntoView({ behavior: "smooth" });
@@ -44,26 +44,37 @@ function Login(): React.ReactElement {
       secondDiv.current.classList.toggle(`delay-300`);
       wordThird.current.classList.toggle(`delay-1000`);
       elements.forEach((element) => {
-        element.current.classList.toggle(`delay-[1300ms]`)
-      })
+        element.current.classList.toggle(`delay-[1300ms]`);
+      });
     }
   };
 
   // Intersection Observer 세팅
   useEffect(() => {
-    const elements = [secondDiv, wordFirst, wordSecond, wordThird, wordFourth, wordFifth];
-    let observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        entry.target.classList.toggle(`${styles.trans}`, entry.isIntersecting);
+    const elements = [
+      secondDiv,
+      wordFirst,
+      wordSecond,
+      wordThird,
+      wordFourth,
+      wordFifth,
+    ];
+    let observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle(
+            `${styles.trans}`,
+            entry.isIntersecting
+          );
+        });
+      },
+      { threshold: 0.5 }
+    );
 
-      });
-    }, {threshold: 0.5});
-  
     elements.forEach((element) => {
       observer.observe(element.current);
-    })
-  }, [])
-
+    });
+  }, []);
 
   return (
     <div
@@ -76,11 +87,32 @@ function Login(): React.ReactElement {
           ref={firstDiv}
           className="text-[10rem] leading-none text-white flex flex-col items-start justify-center ml-28 tracking-wide h-screen"
         >
-          <div className="transition opacity-0 duration-1000 delay-100 -translate-x-40" ref={wordFirst}>내 방에</div>
-          <div className="transition opacity-0 duration-1000 delay-500 -translate-x-40" ref={wordSecond}>포장마차가</div>
-          <div className="transition opacity-0 duration-1000 delay-1000 -translate-x-40" ref={wordThird}>생겼다?!</div>
-          <div className="transition opacity-0 duration-1000 delay-[1300ms] -translate-x-40 w-[33rem] h-3 bg-white mt-3" ref={wordFourth} ></div>
-          <div className="transition opacity-0 duration-1000 delay-[1300ms] -translate-x-40 text-4xl mt-5 font-mono font-bold tracking-tighter" ref={wordFifth}>
+          <div
+            className="transition opacity-0 duration-1000 delay-100 -translate-x-40"
+            ref={wordFirst}
+          >
+            내 방에
+          </div>
+          <div
+            className="transition opacity-0 duration-1000 delay-500 -translate-x-40"
+            ref={wordSecond}
+          >
+            포장마차가
+          </div>
+          <div
+            className="transition opacity-0 duration-1000 delay-1000 -translate-x-40"
+            ref={wordThird}
+          >
+            생겼다?!
+          </div>
+          <div
+            className="transition opacity-0 duration-1000 delay-[1300ms] -translate-x-40 w-[33rem] h-3 bg-white mt-3"
+            ref={wordFourth}
+          ></div>
+          <div
+            className="transition opacity-0 duration-1000 delay-[1300ms] -translate-x-40 text-4xl mt-5 font-nanum font-bold tracking-tighter"
+            ref={wordFifth}
+          >
             Feat : 방 밖은 위험해
           </div>
         </div>
@@ -88,16 +120,25 @@ function Login(): React.ReactElement {
           ref={secondDiv}
           className="flex flex-col items-center justify-center h-screen opacity-0 transition duration-1000 -translate-x-40"
         >
-          <div className={`${styles.neonTitle} text-[10rem] leading-none text-white font-nanum`}>
+          <div
+            className={`${styles.neonTitle} text-[10rem] leading-none text-white font-light `}
+          >
             방구석포차
           </div>
-          <div className="w-2/12 mt-10 cursor-pointer" onClick={()=> {
-            navigate('/main')
-          }} ><img
-            src={require("../../assets/loginIcon/naver.png")}
-            alt="login-naver"
-          /></div>
-          
+          <div
+            className="w-2/12 mt-10 cursor-pointer"
+            // 밑 주석 지우지 말 것
+            onClick={() => {
+              // eslint-disable-next-line no-restricted-globals
+              location.href =
+                "https://nid.naver.com/oauth2.0/authorize?client_id=ZQnQO8XghTL7eTyln27j&redirect_uri=https://i8e201.p.ssafy.io/api/user/oauth2/token/naver&response_type=code";
+            }}
+          >
+            <img
+              src={require("../../assets/loginIcon/naver.png")}
+              alt="login-naver"
+            />
+          </div>
         </div>
       </div>
     </div>
