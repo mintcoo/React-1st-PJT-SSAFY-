@@ -1,17 +1,17 @@
 import axios from "axios";
-import { useRef, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { showRoomUserReportModal } from "../../store/store";
+import { toast } from "react-toastify";
 import styles from "./RoomUserProfile.module.css";
+import { useState } from "react";
 
 const RoomUserRepotModal = ({ userData }: { userData: any }) => {
   let dispatch = useAppDispatch();
   const { username, nickname } = userData.data;
   const [reportReason, setReportReason] = useState<string>("");
   const [reportType, setReportType] = useState<number>(0);
-  const bgDiv = useRef<any>();
-
-
+  console.log(reportType)
+  //주석추가
   const onChange = (event: React.ChangeEvent<any>) => {
     const { name, value } = event.target;
     switch (name) {
@@ -23,6 +23,10 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
         break;
     }
   };
+
+  // 나의 아이디 값
+  const myId = localStorage.getItem("Username");
+  
 
   // 신고하는 함수
   const reportUser = async (event: any) => {
@@ -36,10 +40,10 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
           attackerId: username,
           reportReason: reportReason,
           reportType: reportType,
-          reporterId: 0,
+          reporterId: myId,
         },
       });
-
+      toast.success(`${nickname}을 신고하였습니다`)
       console.log("report", rreport);
     } catch (error) {
       console.log(error);
@@ -54,8 +58,7 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
 
   return (
     <div
-      ref={bgDiv}
-      className="bg-slate-800 bg-opacity-50 flex justify-center z-10 items-center absolute top-0 right-0 bottom-0 left-0"
+      className="bg-slate-800 bg-opacity-50 flex justify-center z-20 items-center absolute top-0 right-0 bottom-0 left-0"
     >
       <div className="bg-black w-[22%] px-14 pt-14 pb-7 rounded-md text-center">
         <form onSubmit={reportUser}>
@@ -66,23 +69,23 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
           <div className="flex justify-center">
             <div className="text-white w-3/4 flex-col">
               <div className="text-start my-2">
-                <input onChange={onChange} type="radio" name="타입" value={0} />
+                <input onChange={onChange} type="radio" name="type" value={0} />
                 <span className="text-lg pl-3">욕설/협박</span>
               </div>
               <div className="text-start my-2">
-                <input onChange={onChange} type="radio" name="타입" value={1} />
+                <input onChange={onChange} type="radio" name="type" value={1} />
                 <span className="text-lg pl-3">혐오발언</span>
               </div>
               <div className="text-start my-2">
-                <input onChange={onChange} type="radio" name="타입" value={2} />
+                <input onChange={onChange} type="radio" name="type" value={2} />
                 <span className="text-lg pl-3">부적절한 닉네임</span>
               </div>
               <div className="text-start my-2">
-                <input onChange={onChange} type="radio" name="타입" value={3} />
+                <input onChange={onChange} type="radio" name="type" value={3} />
                 <span className="text-lg pl-3">음란행위/성희롱</span>
               </div>
               <div className="text-start my-2">
-                <input onChange={onChange} type="radio" name="타입" value={4} />
+                <input onChange={onChange} type="radio" name="type" value={4} />
                 <span className="text-lg pl-3">기타</span>
               </div>
               <div className="text-start mt-5">

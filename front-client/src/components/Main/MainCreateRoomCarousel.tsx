@@ -16,6 +16,7 @@ function MainCreateRoomCarousel({onClickHiddenBtn} : {onClickHiddenBtn: any}) {
   let dispatch = useAppDispatch();
   const bgDiv = useRef<any>();
 
+  // 캐러셀 모달 끄는거
   function CloseCarouselModal(event : any ) {
     if(event.target === bgDiv.current) {
       console.log("cliiick")
@@ -31,7 +32,7 @@ function MainCreateRoomCarousel({onClickHiddenBtn} : {onClickHiddenBtn: any}) {
     <div
       ref={bgDiv}
       onMouseDown={CloseCarouselModal}
-      className="bg-black bg-opacity-90 absolute h-screen w-screen grid"
+      className="bg-black bg-opacity-90 absolute h-screen w-screen grid z-10"
       style={{ gridTemplateRows: "1fr 5fr 1fr" }}
     >
       <div

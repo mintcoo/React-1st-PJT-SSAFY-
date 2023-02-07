@@ -1,14 +1,13 @@
 import axios from "axios";
-import { useRef } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { roomAddFriendModalState } from "../../store/store";
 import { toast } from "react-toastify";
 import styles from "./RoomUserProfile.module.css";
 
 const RoomUserFriendModal = ({ userData }: { userData: any }) => {
+  const clickUserId:number = userData.data.userId
   let dispatch = useAppDispatch();
   const { nickname } = userData.data;
-  const bgDiv = useRef<any>();
 
   // 친구신청 하는 함수
   const addFriend = async () => {
@@ -17,12 +16,17 @@ const RoomUserFriendModal = ({ userData }: { userData: any }) => {
         method: "POST",
         url: "https://i8e201.p.ssafy.io/api/user/friend/request",
         data: {
-          from_id: 0,
-          to_id: 0,
+          from_id: localStorage.getItem('userId'),
+          to_id: clickUserId,
         },
       });
-      toast.success(`${nickname}에게 친구신청을 완료하였습니다`);
-      console.log("친구요청", ffriend);
+      
+      if (ffriend.data.message === "success") {
+        toast.success(`${nickname}에게 친구신청을 완료하였습니다`);
+      } else {
+        toast.error(`${nickname}에게 친구신청을 이미 보냈습니다`);
+      }
+      
     } catch (error) {
       console.log(error);
     }
@@ -37,8 +41,7 @@ const RoomUserFriendModal = ({ userData }: { userData: any }) => {
 
   return (
     <div
-      ref={bgDiv}
-      className="bg-slate-800 bg-opacity-50 flex justify-center z-10 items-center absolute top-0 right-0 bottom-0 left-0"
+      className="bg-slate-800 bg-opacity-50 flex justify-center z-20 items-center absolute top-0 right-0 bottom-0 left-0"
     >
       <div className="bg-black px-16 pt-14 pb-7 rounded-md text-center">
         <div className="text-xl mb-4 font-bold text-white">

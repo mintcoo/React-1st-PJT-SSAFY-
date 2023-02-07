@@ -1,13 +1,14 @@
 import axios from "axios";
-import { useRef } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { showRoomUserBanModal } from "../../store/store";
+import { toast } from "react-toastify";
 import styles from "./RoomUserProfile.module.css";
 
-const RoomUserBanModal = ({ userData }: { userData: any }) => {
+const RoomUserBanModal = ({ userData, pochaId }: { userData: any, pochaId: string }) => {
   let dispatch = useAppDispatch();
-  const { nickname } = userData.data;
-  const bgDiv = useRef<any>();
+  const { nickname, username } = userData.data;
+  const pochaID = Number(pochaId);
+  console.log(' vhck vj',pochaID);
   // 강퇴하는 함수
   const banUser = async () => {
     try {
@@ -16,11 +17,12 @@ const RoomUserBanModal = ({ userData }: { userData: any }) => {
         url: "https://i8e201.p.ssafy.io/api/pocha/exit",
         data: {
           isHost: true,
-          pochaId: 0,
-          username: "string",
+          pochaId: pochaID,
+          username: username,
           waiting: true,
         },
       });
+      toast.success(`${nickname}을 강퇴하였습니다`);
       console.log("bban", bban);
     } catch (error) {
       console.log(error);
@@ -35,8 +37,7 @@ const RoomUserBanModal = ({ userData }: { userData: any }) => {
 
   return (
     <div
-      ref={bgDiv}
-      className="bg-slate-800 bg-opacity-50 flex justify-center z-10 items-center absolute top-0 right-0 bottom-0 left-0"
+      className="bg-slate-800 bg-opacity-50 flex justify-center z-20 items-center absolute top-0 right-0 bottom-0 left-0"
     >
       <div className="bg-black px-16 pt-14 pb-7 rounded-md text-center">
         <div className="text-xl mb-4 font-bold text-white">
