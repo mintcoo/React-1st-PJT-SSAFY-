@@ -48,6 +48,17 @@ const DetailUser = createSlice({
     },
   },
 });
+//선택한 방 데이터
+const DetailRoom = createSlice({
+  name: "detailRoom",
+  initialState: "",
+  reducers: {
+    changeDetailRoom(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
 const SelectDetailUser = createSlice({
   name: "selectDetailUser",
   initialState: false,
@@ -108,8 +119,8 @@ const adminreport = createSlice({
   initialState: "",
   reducers: {
     changeAdminReport(state, action) {
-      return state = action.payload
-    }
+      return (state = action.payload);
+    },
   },
 });
 
@@ -177,6 +188,17 @@ const RoomUserBanClickCheck = createSlice({
   initialState: false,
   reducers: {
     showRoomUserBanModal(state) {
+      return !state;
+    },
+  },
+});
+
+// 탈퇴하기 클릭 여부
+const SecessionClickCheck = createSlice({
+  name: "SecessionClickCheck",
+  initialState: false,
+  reducers: {
+    showSecessionModal(state) {
       return !state;
     },
   },
@@ -271,7 +293,7 @@ const createRoomChoiceTag = createSlice({
     },
     changeCreateRoomChoiceRemoveTag(state: any, action: any): any {
       const newState = state.filter((e: any) => {
-        return e != action.payload;
+        return e !== action.payload;
       });
       return (state = newState);
     },
@@ -348,11 +370,23 @@ const updateRoomInfo = createSlice({
   },
 });
 
+// 친구 초대창 켜고 끄는 함수
+const inviteFriendModal = createSlice({
+  name: "inviteFriendModal",
+  initialState: false,
+  reducers: {
+    inviteMyFriend(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
 //
 export const store = configureStore({
   // store에서 만든 state를 전역에서 사용할 수 있도록 등록하기
   reducer: {
     menuClickCheck: menuClickCheck.reducer,
+    SecessionClickCheck: SecessionClickCheck.reducer,
     alarmClickCheck: alarmClickCheck.reducer,
     mainCreateRoomCarouselCheck: mainCreateRoomCarouselCheck.reducer,
     createThemeRoomCheck: createThemeRoomCheck.reducer,
@@ -382,6 +416,7 @@ export const store = configureStore({
     // DetailUser
     DetailUser: DetailUser.reducer,
     SelectDetailUser: SelectDetailUser.reducer,
+    DetailRoom: DetailRoom.reducer,
 
     // EmojiClickUserData
     navAlarmReviewEmojiUserData: navAlarmReviewEmojiUserData.reducer,
@@ -391,6 +426,7 @@ export const store = configureStore({
     webRtcLoading: webRtcLoading.reducer,
     // room관련
     updateRoomInfo: updateRoomInfo.reducer,
+    inviteFriendModal: inviteFriendModal.reducer,
   },
 });
 //주석추가
@@ -418,6 +454,7 @@ export const {
 export const { changeCreateRoomThemeCheck } = createRoomThemeCheck.actions;
 export const { roomAddFriendModalState } = roomAddFriendModalCheck.actions;
 export const { showRoomUserBanModal } = RoomUserBanClickCheck.actions;
+export const { showSecessionModal } = SecessionClickCheck.actions;
 export const { showRoomUserReportModal } = RoomUserReportClickCheck.actions;
 export const { changemenuFriendClickUserData } =
   menuFriendClickUserData.actions;
@@ -431,6 +468,7 @@ export const { changeUserList } = UserList.actions;
 // DetailUser
 export const { changeDetailUser } = DetailUser.actions;
 export const { changeSelectDetailUser } = SelectDetailUser.actions;
+export const { changeDetailRoom } = DetailRoom.actions;
 export const { changeAdminReport } = adminreport.actions;
 // EmojiClickUserData
 export const { changeNavAlarmReviewEmojiUserData } =
@@ -440,6 +478,7 @@ export const { changeMyPageCheck } = myPageCheck.actions;
 export const { isRtcLoading } = webRtcLoading.actions;
 // room
 export const { showUpdateRoom } = updateRoomInfo.actions;
+export const { inviteMyFriend } = inviteFriendModal.actions;
 
 
 // store의 타입 미리 export 해둔 것.

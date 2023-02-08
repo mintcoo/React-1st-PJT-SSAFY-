@@ -71,6 +71,8 @@ function FriendList(): JSX.Element {
             }
           };
           getChatList().then((data) => {
+            localStorage.setItem('chat_id',chat_id)
+            localStorage.setItem('f_nickname',e.f_nickname)
             dispatch(
               changemenuFriendClickUserData({
                 nickname: e.f_nickname,
@@ -80,11 +82,12 @@ function FriendList(): JSX.Element {
             );
           });
 
-          if (checkChatId === chat_id) {
-            dispatch(changeMenuFriendChatState(!menuFriendChatClickCheck));
-          } else {
-            dispatch(changeMenuFriendChatState(true));
-          }
+          dispatch(changeMenuFriendChatState(!menuFriendChatClickCheck));
+          // if (checkChatId === chat_id) {
+          //   dispatch(changeMenuFriendChatState(!menuFriendChatClickCheck));
+          // } else {
+          //   dispatch(changeMenuFriendChatState(true));
+          // }
         }}
       >
         <div className="flex justify-center items-center h-full pl-2">
