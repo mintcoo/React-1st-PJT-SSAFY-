@@ -1,18 +1,19 @@
-import { useRef } from "react";
+import axios from "axios";
+import { useRef, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   roomAddFriendModalState,
   showRoomUserProfile,
-  showRoomUserBanModal,
-  showRoomUserReportModal,
+  changeRoomDeleteFriendModalCheck,
+  changeMenuFriendListApiDataState
 } from "../../store/store";
-import RoomUserBanModal from "./RoomUserBanModal";
+import RoomUserFriendDeleteModal from "./RoomUserFriendDeleteModal";
 import RoomUserFriendModal from "./RoomUserFriendModal";
-import RoomUserReportModal from "./RoomUserReportModal";
 
 const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
-  console.log('클릭한 유저데이터: ',userData)
+  // console.log('클릭한 유저데이터 닉네임: ',userData.data.profile)
   let dispatch = useAppDispatch();
+  const username = localStorage.getItem('Username')
   let { manner, gender, birth, region, comment } = userData.data;
   const { nickname } = userData.data;
   // 백그라운드 div
@@ -33,11 +34,61 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
     "text-blue-500",
   ];
 
-  // 유저 아래 친추, 강퇴, 신고하기 등
-  const userInfoFootIcons = [
-    require("../../assets/roomIcon/add-user.png"),
-  ];
-  const userInfoFootTitle = ["친구신청"];
+  // 친구 유무에 따른 문구 변경 및 기능 변경
+  // 친구 목록 검색 후 친구라면 친구 삭제 버튼 만들고
+  //  친구가 아니면 친구 추가로 변경
+  const [userInfoFootTitle, setUserInfoFootTitle] = useState<any>()
+  const [userInfoFootIcons, setUserInfoFootIcons] = useState<any>()
+
+  // 친구 요청에 따른 친구 목록 정렬하기
+  function requestFriendList():any {
+    // 요청 이후 친구창 재정렬
+    axios({
+      method: "get",
+      url: `https://i8e201.p.ssafy.io/api/user/friend/${username}`,
+    }).then((r) => {
+      console.log('친구 리스트 조회: ',r.data.data)
+      const friendDataList:any[] = r.data.data
+      const bestFriend:any = []
+      const normalFriend:any = []
+
+      friendDataList.forEach((data:any)=> {
+        if (data.best_friend) {
+          bestFriend.push(data)
+        } else {
+          normalFriend.push(data)
+        }
+      })
+      console.log('베프: ',bestFriend)
+      console.log('친구: ',normalFriend)
+      
+      dispatch(changeMenuFriendListApiDataState([...bestFriend,...normalFriend]));
+    });
+  }
+
+  useEffect(()=> {
+    axios({
+      method: 'get',
+      url: `https://i8e201.p.ssafy.io/api/user/friend/${username}/${nickname}`,
+      params: {
+        f_nickname: nickname,
+        username: username
+      }
+    })
+    .then((r)=> {
+      if (r.data.data.length === 0) {
+        setUserInfoFootTitle('친구신청') 
+        setUserInfoFootIcons(require("../../assets/roomIcon/add-user.png")) 
+      } else {
+        setUserInfoFootTitle('친구삭제') 
+        setUserInfoFootIcons(require("../../assets/roomIcon/remove-user.png"))
+      }
+    })
+    .then(()=> {
+      requestFriendList()
+      
+    })
+  })
 
   // 유저 정보
   const userInfosData = userDataReBuild();
@@ -79,32 +130,38 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
   const clickAddFriend = () => {
     dispatch(roomAddFriendModalState());
   };
+  // 친추 삭제 모달 띄우기
+  const clickRemoveFriend = () => {
+    dispatch(changeRoomDeleteFriendModalCheck());
+  };
   
 
   // 이벤트핸들러들 [친추, 강퇴, 신고]
-  const handlers = [clickAddFriend];
+  function handlers() {
+    if (userInfoFootTitle === '친구신청') {
+      clickAddFriend()
+    } else {
+      clickRemoveFriend()
+    }
+  }
 
   // 친구추가 확인 모달 상태 체크
   const roomAddFriendModalCheck = useAppSelector((state) => {
     return state.roomAddFriendModalCheck;
   });
-
-  // 강퇴 확인 모달 상태 체크
-  const RoomUserBanClickCheck = useAppSelector((state) => {
-    return state.RoomUserBanClickCheck;
-  });
-
-  // 신고 확인 모달 상태 체크
-  const RoomUserReportClickCheck = useAppSelector((state) => {
-    return state.RoomUserReportClickCheck;
-  });
+  // 친구삭제 확인 모달 상태 체크
+  const roomDeleteFriendModalCheck = useAppSelector((state)=> {return state.roomDeleteFriendModalCheck})
+  
+  
 
   return (
     <>
       {roomAddFriendModalCheck ? (
         <RoomUserFriendModal userData={userData} />
       ) : null}
-      {RoomUserReportClickCheck ? <RoomUserReportModal userData={userData} /> : null}
+      {
+        roomDeleteFriendModalCheck ? <RoomUserFriendDeleteModal userData={userData}/> : null
+      }
       <div
         ref={bgDiv}
         onMouseDown={CloseProfileModal}
@@ -115,9 +172,9 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
         >
           <div className={`w-full h-24 flex justify-center items-center`}>
             <img
-              className={`h-full`}
-              src={require("../../assets/myPage/sunglassEmoji.png")}
-              alt="sunglass"
+              className={`object-fill rounded-full h-[6rem] w-[6rem]`}
+              src={userData.data.profile}
+              alt=""
             />
           </div>
           <div className={`w-full h-16 text-3xl font-bold`}>
@@ -146,23 +203,19 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
             })}
           </div>
           <div className={`flex h-20 p-2 justify-evenly border-t rounded-full`}>
-            {userInfoFootTitle.map((info, index) => {
-              return (
-                <div key={info} className={`w-1/4 h-full flex-col`}>
-                  <div
-                    className={`w-full h-3/4 flex justify-center items-center`}
-                  >
-                    <img
-                      onClick={handlers[index]}
-                      className={`h-3/4 cursor-pointer hover:scale-110`}
-                      src={userInfoFootIcons[index]}
-                      alt={info}
-                    />
-                  </div>
-                  <div className="text-sm">{info}</div>
-                </div>
-              );
-            })}
+            <div  className={`w-1/4 h-full flex-col`}>
+              <div
+                className={`w-full h-3/4 flex justify-center items-center`}
+              >
+                <img
+                  onClick={handlers}
+                  className={`h-3/4 cursor-pointer hover:scale-110`}
+                  src={userInfoFootIcons}
+                  alt=""
+                />
+              </div>
+              <div className="text-sm">{userInfoFootTitle}</div>
+            </div>
           </div>
         </div>
       </div>

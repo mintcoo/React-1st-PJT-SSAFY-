@@ -10,9 +10,9 @@ import RoomUserBanModal from "./RoomUserBanModal";
 import RoomUserFriendModal from "./RoomUserFriendModal";
 import RoomUserReportModal from "./RoomUserReportModal";
 
-const RoomUserProfile = ({ userData, pochaId }: { userData: any, pochaId: string }) => {
+const RoomUserProfile = ({ userData, pochaId, isHost, socket }: { userData: any, pochaId: string, isHost?: boolean, socket: any }) => {
   let dispatch = useAppDispatch();
-  let { manner, gender, birth, region, comment } = userData.data;
+  let { manner, gender, birth, region, comment, profile } = userData.data;
   const { nickname } = userData.data;
   // 백그라운드 div
   const bgDiv = useRef<any>();
@@ -31,14 +31,42 @@ const RoomUserProfile = ({ userData, pochaId }: { userData: any, pochaId: string
     "text-green-500",
     "text-blue-500",
   ];
+  // 친추 묻는 모달 띄우기
+  const clickAddFriend = () => {
+    dispatch(roomAddFriendModalState());
+  };
+  // 강퇴 묻는 모달 띄우기
+  const clickBanUser = () => {
+    dispatch(showRoomUserBanModal());
+  };
+  // 신고창 모달 띄우기
+  const clickReportUser = () => {
+    dispatch(showRoomUserReportModal());
+  };
 
+  console.log(isHost,"방장?**********************")
   // 유저 아래 친추, 강퇴, 신고하기 등
-  const userInfoFootIcons = [
-    require("../../assets/roomIcon/add-user.png"),
-    require("../../assets/roomIcon/exclamation-mark.png"),
-    require("../../assets/roomIcon/report.png"),
-  ];
-  const userInfoFootTitle = ["친구신청", "강퇴하기", "신고하기"];
+  // 이벤트핸들러들 [친추, 강퇴, 신고]
+  let userInfoFootIcons : any[];
+  let userInfoFootTitle : string[];
+  let handlers: any[] = [];
+  if (isHost) {
+    userInfoFootIcons = [
+      require("../../assets/roomIcon/add-user.png"),
+      require("../../assets/roomIcon/exclamation-mark.png"),
+      require("../../assets/roomIcon/report.png"),
+    ];
+    userInfoFootTitle = ["친구신청", "강퇴하기", "신고하기"];
+    handlers = [clickAddFriend, clickBanUser, clickReportUser];
+  } else {
+    userInfoFootIcons = [
+      require("../../assets/roomIcon/add-user.png"),
+      require("../../assets/roomIcon/report.png"),
+    ];
+    userInfoFootTitle = ["친구신청", "신고하기"];
+    handlers = [clickAddFriend, clickReportUser];
+  }
+
 
   // 유저 정보
   const userInfosData = userDataReBuild();
@@ -76,22 +104,7 @@ const RoomUserProfile = ({ userData, pochaId }: { userData: any, pochaId: string
     }
   }
 
-  // 친추 묻는 모달 띄우기
-  const clickAddFriend = () => {
-    dispatch(roomAddFriendModalState());
-  };
-  // 강퇴 묻는 모달 띄우기
-  const clickBanUser = () => {
-    dispatch(showRoomUserBanModal());
-  };
-  // 신고창 모달 띄우기
-  const clickReportUser = () => {
-    dispatch(showRoomUserReportModal());
-  };
-
-  // 이벤트핸들러들 [친추, 강퇴, 신고]
-  const handlers = [clickAddFriend, clickBanUser, clickReportUser];
-
+ 
   // 친구추가 확인 모달 상태 체크
   const roomAddFriendModalCheck = useAppSelector((state) => {
     return state.roomAddFriendModalCheck;
@@ -112,7 +125,7 @@ const RoomUserProfile = ({ userData, pochaId }: { userData: any, pochaId: string
       {roomAddFriendModalCheck ? (
         <RoomUserFriendModal userData={userData} />
       ) : null}
-      {RoomUserBanClickCheck ? <RoomUserBanModal userData={userData} pochaId={pochaId} /> : null}
+      {RoomUserBanClickCheck ? <RoomUserBanModal userData={userData} pochaId={pochaId} socket={socket} /> : null}
       {RoomUserReportClickCheck ? <RoomUserReportModal userData={userData} /> : null}
       <div
         ref={bgDiv}
@@ -125,7 +138,7 @@ const RoomUserProfile = ({ userData, pochaId }: { userData: any, pochaId: string
           <div className={`w-full h-24 flex justify-center items-center`}>
             <img
               className={`h-full`}
-              src={require("../../assets/myPage/sunglassEmoji.png")}
+              src={profile}
               alt="sunglass"
             />
           </div>

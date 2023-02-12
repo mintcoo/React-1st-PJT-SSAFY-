@@ -8,6 +8,7 @@ import {
   changeMenuFriendListApiDataState,
   changeMenuFriendState,
   changeMenuState,
+  changeMyInfo,
 } from "../../store/store";
 
 function NavbarMenu(): JSX.Element {
@@ -71,7 +72,14 @@ function NavbarMenu(): JSX.Element {
           className="ml-5 cursor-pointer"
           style={{ height: "52%" }}
           onClick={() => {
-            navigate("/mypage");
+            axios({
+              method: "get",
+              url: `https://i8e201.p.ssafy.io/api/user/myinfo/${username}`,
+            }).then((r) => {
+              // console.log("내정보 : ", r.data.data);
+              dispatch(changeMyInfo(r.data.data));
+              navigate("/newmypage");
+            });
           }}
         >
           <img
@@ -91,18 +99,23 @@ function NavbarMenu(): JSX.Element {
               method: "get",
               url: `https://i8e201.p.ssafy.io/api/user/friend/${username}`,
             }).then((r) => {
-              // 중복된 친구 등록으로 인해 생길 수 있는 현상 방지
-              const data = r.data.data;
-              const checkFriendId: string[] = [];
-              const setFriendData: string[] = [];
-              data.forEach((e: any) => {
-                if (checkFriendId.includes(e.f_nickname) !== true) {
-                  checkFriendId.push(e.f_nickname);
-                  setFriendData.push(e);
+              console.log('친구 리스트 조회: ',r.data.data)
+              const friendDataList:any[] = r.data.data
+              const bestFriend:any = []
+              const normalFriend:any = []
+
+              friendDataList.forEach((data:any)=> {
+                if (data.best_friend) {
+                  bestFriend.push(data)
+                } else {
+                  normalFriend.push(data)
                 }
-              });
+              })
+              console.log('베프: ',bestFriend)
+              console.log('친구: ',normalFriend)
+              
               dispatch(changeMenuFriendState());
-              dispatch(changeMenuFriendListApiDataState(setFriendData));
+              dispatch(changeMenuFriendListApiDataState([...bestFriend,...normalFriend]));
             });
           }}
         >

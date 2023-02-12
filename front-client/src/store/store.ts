@@ -18,6 +18,70 @@ const menuClickCheck = createSlice({
   },
 });
 
+const myInfo = createSlice({
+  name: "myInfo",
+  initialState: "",
+  reducers: {
+    changeMyInfo(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
+// 마이페이지에 있는 유저 프로필설정 클릭 여부
+const MyPageProfileClickCheck = createSlice({
+  name: "MyPageProfileClickCheck",
+  initialState: false,
+  reducers: {
+    showMyPageProfileSelect(state) {
+      return !state;
+    },
+  },
+});
+
+//GameSetting Modal clickcheck
+const YanggameSettingModalClickCheck = createSlice({
+  name: "YanggameSettingModalClickCheck",
+  initialState: false,
+  reducers: {
+    showYanggameSettingModal(state) {
+      return !state;
+    },
+  },
+});
+
+const BalancegameSettingModalClickCheck = createSlice({
+  name: "BalancegameSettingModalClickCheck",
+  initialState: false,
+  reducers: {
+    showBalancegameeSettingModal(state) {
+      return !state;
+    },
+  },
+});
+
+const LiargameSettingModalClickCheck = createSlice({
+  name: "LiargameSettingModalClickCheck",
+  initialState: false,
+  reducers: {
+    showLiargameSettingModal(state) {
+      return !state;
+    },
+  },
+});
+
+//GameSetting Modal clickcheck
+
+const SelectProfile = createSlice({
+  name: "SelectProfile",
+  initialState: "",
+  reducers: {
+    changeMyPageProfile(state, action) {
+      return state = action.payload;
+    },
+  },
+})
+
 //유저이름
 const userName = createSlice({
   name: "userName",
@@ -177,6 +241,17 @@ const roomAddFriendModalCheck = createSlice({
   initialState: false,
   reducers: {
     roomAddFriendModalState(state) {
+      return !state;
+    },
+  },
+});
+
+// 친구 삭제 클릭 여부
+const roomDeleteFriendModalCheck = createSlice({
+  name: "roomDeleteFriendModalCheck",
+  initialState: false,
+  reducers: {
+    changeRoomDeleteFriendModalCheck(state) {
       return !state;
     },
   },
@@ -370,12 +445,67 @@ const updateRoomInfo = createSlice({
   },
 });
 
+// 포차변경 켜고 끄는 함수
+const changeUpdatePocha = createSlice({
+  name: "changeUpdatePocha",
+  initialState: false,
+  reducers: {
+    showUpdatePocha(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
 // 친구 초대창 켜고 끄는 함수
 const inviteFriendModal = createSlice({
   name: "inviteFriendModal",
   initialState: false,
   reducers: {
     inviteMyFriend(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
+// 친구 요청 검색 모달 켜고 끄는 함수
+const friendSearchState = createSlice({
+  name: "friendSearchState",
+  initialState: false,
+  reducers: {
+    changeFriendSearchState(state, action) {
+      return state = action.payload
+    },
+  },
+});
+
+// Roulette 결과 모달 켜고 끄는 함수
+const rouletteResultModal = createSlice({
+  name: "rouletteResultModal",
+  initialState: false,
+  reducers: {
+    showRouletteResultModal(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
+// 게임 선택창 켜고 끄는 함수
+const gameSelectModal = createSlice({
+  name: "gameSelectModal",
+  initialState: true,
+  reducers: {
+    showGameSelectModal(state, action) {
+      return (state = action.payload);
+    },
+  },
+});
+
+// 선택한 게임ID 구분
+const selectGameId = createSlice({
+  name: "selectGameId",
+  initialState: "",
+  reducers: {
+    selectGame(state, action) {
       return (state = action.payload);
     },
   },
@@ -409,6 +539,7 @@ export const store = configureStore({
     PublicModal: PublicModal.reducer,
     // 관리자
     mainCreateRoomList: mainCreateRoomList.reducer,
+    myInfo: myInfo.reducer,
     // username
     userName: userName.reducer,
     // userList
@@ -417,6 +548,14 @@ export const store = configureStore({
     DetailUser: DetailUser.reducer,
     SelectDetailUser: SelectDetailUser.reducer,
     DetailRoom: DetailRoom.reducer,
+    MyPageProfileClickCheck: MyPageProfileClickCheck.reducer,
+    SelectProfile: SelectProfile.reducer,
+
+    //GameSettingModal
+    YanggameSettingModalClickCheck: YanggameSettingModalClickCheck.reducer,
+    BalancegameSettingModalClickCheck: BalancegameSettingModalClickCheck.reducer,
+    LiargameSettingModalClickCheck: LiargameSettingModalClickCheck.reducer,
+
 
     // EmojiClickUserData
     navAlarmReviewEmojiUserData: navAlarmReviewEmojiUserData.reducer,
@@ -426,7 +565,16 @@ export const store = configureStore({
     webRtcLoading: webRtcLoading.reducer,
     // room관련
     updateRoomInfo: updateRoomInfo.reducer,
+    changeUpdatePocha: changeUpdatePocha.reducer,
     inviteFriendModal: inviteFriendModal.reducer,
+    // 친구 요청 검색 모달
+    friendSearchState: friendSearchState.reducer,
+    // 친구 삭제 모달 클릭 여부
+    roomDeleteFriendModalCheck: roomDeleteFriendModalCheck.reducer,
+    // Game관련
+    rouletteResultModal : rouletteResultModal.reducer,
+    gameSelectModal : gameSelectModal.reducer,
+    selectGameId : selectGameId.reducer,
   },
 });
 //주석추가
@@ -461,6 +609,16 @@ export const { changemenuFriendClickUserData } =
 export const { showPublicModal } = PublicModal.actions;
 // 관리자
 export const { changeMainCreateRoomList } = mainCreateRoomList.actions;
+export const { changeMyInfo } = myInfo.actions;
+export const { showMyPageProfileSelect } = MyPageProfileClickCheck.actions;
+export const { changeMyPageProfile } = SelectProfile.actions
+
+//adminGameSetting
+export const { showBalancegameeSettingModal } = BalancegameSettingModalClickCheck.actions;
+export const { showLiargameSettingModal } = LiargameSettingModalClickCheck.actions;
+export const { showYanggameSettingModal } = YanggameSettingModalClickCheck.actions;
+
+
 // username
 export const { changeUserName } = userName.actions;
 // userList
@@ -478,8 +636,16 @@ export const { changeMyPageCheck } = myPageCheck.actions;
 export const { isRtcLoading } = webRtcLoading.actions;
 // room
 export const { showUpdateRoom } = updateRoomInfo.actions;
+export const { showUpdatePocha } = changeUpdatePocha.actions;
 export const { inviteMyFriend } = inviteFriendModal.actions;
-
+// 친구 요청 검색 모달
+export const { changeFriendSearchState } = friendSearchState.actions;
+// 친구 삭제 모달 클릭 여부
+export const { changeRoomDeleteFriendModalCheck } = roomDeleteFriendModalCheck.actions;
+// Game관련
+export const { showRouletteResultModal } = rouletteResultModal.actions;
+export const { showGameSelectModal } = gameSelectModal.actions;
+export const { selectGame } = selectGameId.actions;
 
 // store의 타입 미리 export 해둔 것.
 export type RootState = ReturnType<typeof store.getState>;

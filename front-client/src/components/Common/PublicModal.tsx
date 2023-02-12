@@ -3,11 +3,19 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAppDispatch } from "../../store/hooks";
-import { showPublicModal } from "../../store/store";
+import { selectGame, showPublicModal, showRouletteResultModal } from "../../store/store";
 import styles from "./RoomUserProfile.module.css";
 
-const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Function }) => {
-  console.log("여기까지는 오니??ㅇㅇ", data)
+const PublicModal = ({
+  data,
+  socket,
+  fx,
+}: {
+  data: any;
+  socket?: any;
+  fx?: Function;
+}) => {
+  console.log("여기까지는 오니??ㅇㅇ", data);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   // 내 아이디
@@ -42,6 +50,9 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
     switch (data.type) {
       case "tag":
         break;
+      case "host":
+        setNickName(nickname);
+        break;
       case "addTime":
         setRoomName(pochaId);
         setIsCancelBtn(true);
@@ -60,6 +71,10 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
         setNickName(nickname);
         setToUserName(username);
         setIsCancelBtn(true);
+        break;
+      case "roulette":
+        setRoomName(pochaId);
+        break;
     }
   }, []);
 
@@ -89,14 +104,15 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
   // 포차 나가기 요청
   async function handlePochaExit() {
     try {
-      await api.put("/pocha/exit", {
-        isHost: false,
-        pochaId: roomName,
-        username: myName, // << 여기 내 유저네임 가져와야함
-        waiting: false,
-      });
+      // await api.put("/pocha/exit", {
+      //   isHost: false,
+      //   pochaId: roomName,
+      //   username: myName, // << 여기 내 유저네임 가져와야함
+      //   waiting: false,
+      // });
+      localStorage.setItem("reloadExit", "true");
       navigate(`/main`);
-      toast.success("방에서 나오셨습니다");
+      window.location.reload();
     } catch (error) {
       console.log("포차나가기 error", error);
     }
@@ -108,11 +124,11 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
         method: "POST",
         url: `/api/pocha/invite`,
         data: {
-          "fromUsername": myName,
-          "pochaId": roomName,
-          "youId": toUsername,
-        }
-      })
+          fromUsername: myName,
+          pochaId: roomName,
+          youId: toUsername,
+        },
+      });
       toast.success(`${nickname}님에게 초대요청을 보냈습니다`);
     } catch (error) {
       console.log("포차에 친구초대 실패", error);
@@ -123,9 +139,11 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
   const BgCloseModal = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === bgDiv.current) {
       dispatch(showPublicModal(false));
-      if(fx) {
+      if (fx) {
         fx!();
       }
+      // // Roulette방에서 모달끄기
+      // dispatch(showRouletteResultModal(false));
     }
   };
 
@@ -133,9 +151,11 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
   const onClickConfirm = () => {
     switch (data.type) {
       case "tag":
-        if(fx) {
+        if (fx) {
           fx!();
         }
+        break;
+      case "host":
         break;
       case "addTime":
         handlePochaExtension();
@@ -149,13 +169,19 @@ const PublicModal = ({ data, socket, fx }: { data: any; socket?: any, fx?: Funct
       case "invite":
         inviteMyFriend();
         break;
+      case "roulette":
+        console.log("게임선택창게임선택창", roomName);
+        // 게임선택창으로 돌아가기
+        socket.emit("game_back_select", roomName);
+        break;
     }
-    // 모달 끄기
+    // RoomFooterNavbar에서 모달 끄기
     dispatch(showPublicModal(false));
   };
 
   // 취소 클릭시 모달 끄는 함수
   const onClickCancel = () => {
+    // RoomFooterNavbar에서 모달 끄기
     dispatch(showPublicModal(false));
   };
 

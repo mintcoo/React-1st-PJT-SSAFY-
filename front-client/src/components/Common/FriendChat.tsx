@@ -15,7 +15,7 @@ function FriendChat():JSX.Element {
 
   
   // 채팅구역
-  const chatArea = useRef<any>(null)
+  const chatArea = useRef<any>(null) 
   const client = useRef<any>({});
 
   useEffect(()=> {
@@ -40,6 +40,9 @@ function FriendChat():JSX.Element {
     const chat_id = localStorage.getItem('chat_id')
     axios.get(`https://i8e201.p.ssafy.io/api/user/friend/chat/${chat_id}`).then((r)=> {
       setMessage(r.data.data)
+      setTimeout(() => {
+        scrollToBottom()
+      }, 100);
     })
   },[])
 
@@ -57,11 +60,14 @@ function FriendChat():JSX.Element {
         client.current.subscribe("/sub/chat/"+ chat_id, function(newMessage:any) {
           const msg = JSON.parse(newMessage.body)
           setMessage((_chat_list:any)=> [..._chat_list, msg])
+          setTimeout(() => {
+            scrollToBottom()
+          }, 100);
         });
       },
     });
       client.current.activate();
-      scrollToBottom()
+      
     }
 
   const disconnect = () => {
@@ -91,37 +97,33 @@ function FriendChat():JSX.Element {
 
   function MyChat({content}:any):JSX.Element {
     return (
-      <div className="flex justify-end items-center my-1 ">
+      // <div className="flex justify-end items-center my-[0.25rem] ">
         <div className="grid w-full " style={{gridTemplateColumns: '3fr 2fr'}}>
-          <div className="inline-flex justify-start items-center whitespace-normal">
-            <span className="text-gray-50 rounded-lg bg-orange-400 font-medium">&nbsp;&nbsp;{content}&nbsp;&nbsp;</span>
+          <div className="inline-flex justify-start items-center whitespace-normal ">
+            <span className="text-white rounded-lg h-[100%] py-1 bg-gray-500/70  font-medium text-[1.2rem]">&nbsp;&nbsp;{content}&nbsp;&nbsp;</span>
           </div>
           <div className=""></div>
         </div>
-      </div>
+      // </div>
     )
   }
 
   function OtherChat({content}:any):JSX.Element {
     return (
-      <div className="flex justify-end items-center my-1 ">
+      // <div className="flex justify-end items-center my-[0.25rem] ">
         <div className="grid w-full " style={{gridTemplateColumns: '2fr 3fr'}}>
           <div className=""></div>
-          <div className="inline-flex justify-end items-center whitespace-normal">
-            <span className="text-gray-50 rounded-lg bg-blue-400 font-medium">&nbsp;&nbsp;{content}&nbsp;&nbsp;</span>
+          <div className="inline-flex justify-end items-center whitespace-normal ">
+            <span className="text-white rounded-lg h-[100%] py-1 bg-green-400/80 font-medium text-[1.2rem]">&nbsp;&nbsp;{content}&nbsp;&nbsp;</span>
           </div>
         </div>
-      </div>
+      // </div>
     )
   }
 
   const scrollToBottom = () => {
     if (chatArea.current) {
       chatArea.current.scrollTop = chatArea.current.scrollHeight
-      console.log("스크롤높이: ", chatArea.current.scrollHeight)
-      console.log('스크롤탑-31.95: ', chatArea.current.scrollTop-31.95);
-      console.log('스크롤탑: ', chatArea.current.scrollTop);
-      
     }
   };
 
@@ -130,7 +132,11 @@ function FriendChat():JSX.Element {
   const handleKeyPress = (e: any) => {
     if (e.key === 'Enter') {
       publish(inputChat)
-      scrollToBottom()
+
+      setTimeout(() => {
+        scrollToBottom()
+      }, 100);
+      
       setInputChat("");
     }
   };
@@ -140,15 +146,15 @@ function FriendChat():JSX.Element {
   return (
     <div ref={friendChat} className="absolute  w-[33rem] h-[35rem] max-h-[35rem] top-[11.6rem] right-[19rem] hidden">
         <div className="relative grid w-full h-full rounded-[24px] bg-black text-white" style={{gridTemplateRows: '0.5fr 0.5fr 7fr 1fr', border:'solid 2px white'}}>
-            <div className="flex justify-center items-center h-[1.8rem] max-h-[1.8rem] w-full  text-white rounded-[100px] ">Chat</div>
-            <div className={`flex justify-center items-center h-[2.6rem] max-h-[2.6rem] w-full  rounded-[15px] text-lg tracking-wide ${styles.nickNameNeon}`}></div>
+            <div className="flex justify-center items-center h-[1.8rem] max-h-[1.8rem] w-full  text-white rounded-[100px] ">채팅</div>
+            <div className={`flex justify-center items-center h-[2.6rem] max-h-[2.6rem] w-full  rounded-[15px] text-lg tracking-wide ${styles.nickNameNeon}`}>{f_nickname}</div>
             {/* 채팅 공간 */}
-            <div ref={chatArea} className={`grid w-full bg-black h-full text-white overflow-scroll ${styles.hideScroll}`}>
-              {
+            <div ref={chatArea} className={`grid w-full bg-black h-full text-white overflow-scroll ${styles.hideScroll}`} style={{gridAutoRows: 'auto'}}>
+              { 
                 message&&message.map((chat:any)=>{
                   // console.log(chat)
-                  return (
-                    <div className="flex flex-col justify-start w-full h-full ">
+                  return ( 
+                    <div className="w-full h-full my-[0.35rem]">
                       {
                         chat.user_nickname === f_nickname? <MyChat content={chat.content}/>: <OtherChat content={chat.content}/>
                       }
@@ -166,7 +172,9 @@ function FriendChat():JSX.Element {
               <div className="my-auto mr-[10%] h-[55%] w-[90%] mx-auto">
                 <img className="cursor-pointer" src={require('../../assets/friendChatIcon/dm.png')} alt="" onClick={()=>{
                   publish(inputChat)
-                  scrollToBottom()
+                  setTimeout(() => {
+                    scrollToBottom()
+                  }, 100);
                   // setsendCheck(sendCheck+1)
                 }}/>
               </div>
