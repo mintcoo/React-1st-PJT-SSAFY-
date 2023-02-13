@@ -6,6 +6,7 @@ import {
   changeCreateRoomChoiceAddTag,
   changeCreateRoomChoiceRemoveTag,
   changeCreateRoomChoiceTagReset,
+  showUpdatePocha,
   showUpdateRoom,
 } from "../../store/store";
 import MainCreateRoomTheme from "src/components/Main/MainCreateRoomTheme";
@@ -70,7 +71,7 @@ const UpdateChangeStoryAndGame = ({
   // 전달받아온 함수를 실행해서 창끄기
   const closeModal = () => {
     // onClickHiddenBtn();
-    dispatch(showUpdateRoom(false));
+    dispatch(showUpdatePocha(false));
   };
 
   // 태그 리스트
@@ -168,18 +169,19 @@ const UpdateChangeStoryAndGame = ({
   }, []);
 
   // 포차 정보 업데이트 요청
-  const updateRoom = async () => {
+  const updateRoom = async (event: React.MouseEvent<HTMLInputElement> ) => {
+    const changeThemeId = event.currentTarget.id;
     try {
       const updateInfo = await axios({
         method: "PUT",
         url: `https://i8e201.p.ssafy.io/api/pocha/${pochaId}`,
         data: {
           age: createRoomChoiceAge,
-          isPrivate: false,
+          isPrivate: pochaInfo.isPrivate,
           limitUser: createRoomChoicePeople,
           region: createRoomChoiceRegion,
           tagList: choiceTagList,
-          themeId: createRoomThemeCheck,
+          themeId: changeThemeId === "game" ? "T1B0" : createRoomThemeCheck,
         },
       });
       console.log("포차정보수정????", updateInfo);
@@ -259,7 +261,8 @@ const UpdateChangeStoryAndGame = ({
                   onClick={updateRoom}
                   className={`${style.createBtn} cursor-pointer`}
                   type="button"
-                  value="정보수정"
+                  id="story"
+                  value="소통포차변경"
                 />
                 <input
                   onClick={() => {
@@ -339,7 +342,8 @@ const UpdateChangeStoryAndGame = ({
                   onClick={updateRoom}
                   className={`${style.createBtn} cursor-pointer`}
                   type="button"
-                  value="정보수정"
+                  id="game"
+                  value="게임포차변경"
                 />
                 <input
                   onClick={closeModal}
