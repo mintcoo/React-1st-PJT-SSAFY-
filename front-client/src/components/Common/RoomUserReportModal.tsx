@@ -18,7 +18,7 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
       case "사유":
         setReportReason(value);
         break;
-      case "type":
+      case "타입":
         setReportType(Number(value));
         break;
     }
@@ -44,7 +44,7 @@ const RoomUserRepotModal = ({ userData }: { userData: any }) => {
         },
       });
       toast.success(`${nickname}을 신고하였습니다`)
-      console.log("report신고갔냐", rreport);
+      console.log("report", rreport);
     } catch (error) {
       console.log("유저신고에러", error);
     }

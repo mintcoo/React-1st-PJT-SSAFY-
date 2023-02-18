@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useAppDispatch, useAppSelector } from "src/store/hooks";
-import { LadderChange } from "src/store/store";
 import Ladder from "./Ladder";
 import styles from "./LadderIntro.module.css";
 
@@ -13,20 +11,12 @@ function LadderIntro({
   pochaId: string;
   pochaUsers: any;
 }): React.ReactElement {
-  
-  const dispatch = useAppDispatch();
-
   const usersLength = pochaUsers.length;
-
-  // 방 이름
-  const roomName = pochaId;
-
-  const isLadder = useAppSelector((state) => {
-    return state.isLadder;
-  });
+  const [isLadder, setIsLadder] = useState<boolean>(false);
 
   const onClickClose = () => {
-    socket.emit("game_back_select", roomName);
+    console.log("클릭!!");
+    setIsLadder(true);
   };
 
   return (
@@ -62,9 +52,7 @@ function LadderIntro({
               <input
                 type="button"
                 className={`${styles.retry}`}
-                onClick={() => {
-                  dispatch(LadderChange());
-                }}
+                onClick={onClickClose}
                 value="PLAY"
               />
             </div>

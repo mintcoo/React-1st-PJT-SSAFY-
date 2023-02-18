@@ -520,12 +520,7 @@ const NewMyPage = () => {
                     </div>
                   </div>
                   <div className="h-[35%] pl-[15rem] pr-2 pt-2">
-                    <div
-                      className="w-full h-[30%] cursor-pointer"
-                      onClick={() => {
-                        navigate("/pointhistory");
-                      }}
-                    >
+                    <div className="w-full h-[30%] cursor-pointer">
                       포인트 내역
                     </div>
                   </div>

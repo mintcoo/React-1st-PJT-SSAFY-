@@ -15,8 +15,6 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
   let dispatch = useAppDispatch();
   const username = localStorage.getItem('Username')
   let { manner, gender, birth, region, comment } = userData.data;
-  console.log('이거는 매너입니다: ', manner);
-  
   const { nickname } = userData.data;
   // 백그라운드 div
   const bgDiv = useRef<any>();
@@ -167,7 +165,7 @@ const NavUserEmojiClickModal = ({ userData }: { userData: any }) => {
       <div
         ref={bgDiv}
         onMouseDown={CloseProfileModal}
-        className={`bg-slate-800 bg-opacity-50 fixed w-full h-full text-white z-10`}
+        className={`bg-slate-800 bg-opacity-50 fixed w-full h-full text-white`}
       >
         <div
           className={`min-w-[24rem] bg-black w-[20%] px-10 pt-10 pb-5 rounded-3xl relative top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`}

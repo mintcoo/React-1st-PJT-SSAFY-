@@ -55,19 +55,6 @@ function Main(): JSX.Element {
       });
   }, []);
 
-  // useEffect(()=> {
-  //   exitMethod()
-  //   return () =>  exitMethod()
-  // },[])
-
-  // function exitMethod() {
-  //   if (checkMenuState) {
-  //     dispatch(changeMenuState());
-  //   } else if (alarmClickCheck) {
-  //     dispatch(changeAlarmState());
-  //   }
-  // }
-
   // 메인에 들어올 시 현재 생성된 방 리스트 state 갱신
   // useEffect(() => {
   //   axios({
@@ -134,7 +121,7 @@ function Main(): JSX.Element {
   const RoomUserProfileClickCheck: any = useAppSelector((state: any) => {
     return state.RoomUserProfileClickCheck;
   });
-  
+
   // 캐러셀 클릭시 알림&메뉴 컴포넌트 조건분기
   if (mainCreateRoomCarouselCheck) {
     if (checkMenuState) {
@@ -153,7 +140,7 @@ function Main(): JSX.Element {
 
       {/* 포차+ 클릭에 따른 테마선택 캐러셀 보이기 */}
       {mainCreateRoomCarouselCheck ? (
-        <MainCreateRoomCarousel />
+        <MainCreateRoomCarousel onClickHiddenBtn={onClickHiddenBtn} />
       ) : null}
 
       {/* 선택한 테마에 따른 방만들기 셋팅 */}
@@ -186,15 +173,14 @@ function Main(): JSX.Element {
           <div
             className="grid mx-auto min-w-f"
             style={{
-              gridTemplateRows: "25rem 1fr 3rem",
+              gridTemplateRows: "20rem 1fr 3rem",
               backgroundColor: "rgb(25, 25, 25)",
             }}
           >
             {/* 태그 */}
-            <div className="grid" style={{ gridTemplateRows: "12rem 1fr" }}>
+            <div className="grid" style={{ gridTemplateRows: "12rem 8rem" }}>
               <div></div>
               <Tag />
-
             </div>
             {/* 방 보이기 */}
             <div
@@ -208,8 +194,7 @@ function Main(): JSX.Element {
         </div>
 
         {/* 방 생성 버튼 */}
-        {/* Tag 컴포넌트로 이동 */}
-        {/* <div
+        <div
           ref={createBtn}
           onClick={() => {
             dispatch(changeCarouselState());
@@ -223,7 +208,7 @@ function Main(): JSX.Element {
             alt=""
             className="w-1/6 min-w-1/6"
           />
-        </div> */}
+        </div>
 
         {/* 메뉴 클릭시 보이기 */}
         <NavbarMenu />
@@ -274,10 +259,9 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
     // { age: 0, region:'전국', gender: '',}
     // 헌팅방 입장
     if (themeId === 'T2') {
-      console.log(themeId)
       // 나이,지역,잠금,총인원수,성비 체크
       if ((myState.gender === 'M')&&(age===0 || age===myState.age) && (region === '전국' || region === myState.region) &&
-        (limitUser > totalCount) && (limitUser/2 >maleCount) && (isWaiting)) {
+        (limitUser > totalCount) && (limitUser/2 >maleCount)) {
           axios({
             method: 'post',
             url: 'https://i8e201.p.ssafy.io/api/pocha/enter',
@@ -290,7 +274,7 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
             navigate(`/meetingroom/${pochaId}`);
           })
         } else if ((myState.gender === 'F')&&(age===0 || age===myState.age) && (region === '전국' || region === myState.region) &&
-        (limitUser > totalCount) && (limitUser/2 >femaleCount) && (isWaiting)) {
+        (limitUser > totalCount) && (limitUser/2 >femaleCount)) {
           axios({
             method: 'post',
             url: 'https://i8e201.p.ssafy.io/api/pocha/enter',

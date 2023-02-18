@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import { useAppDispatch, useAppSelector } from "src/store/hooks";
 import {
-  changeNavAlarmReviewEmojiUserData,
   isRtcLoading,
   selectGame,
   showGameSelectModal,
@@ -16,12 +15,9 @@ import {
 } from "../../store/store";
 import Loading from "../Common/Loading";
 import RoomUserProfile from "../Common/RoomUserProfile";
-import Balance from "../Games/Balance/Balance";
 import GameSelect from "../Games/GameSelect/GameSelect";
 import LadderIntro from "../Games/Ladder/LadderIntro";
-import LiarIntro from "../Games/Liar/LiarIntro";
 import Roulette from "../Games/Roulette/Roulette";
-import SonIntro from "../Games/Son/SonIntro";
 // webRTC관련
 const socket = io("https://pocha.online");
 
@@ -181,7 +177,6 @@ const WebRTC = ({
       }
       console.log("마이스트림 오냐?", myStream.current);
       myFace.current!.srcObject = myStream.current;
-      myFace.current!.volume = 0;
       if (!deviceId) {
         await getCameras();
       }
@@ -424,7 +419,7 @@ const WebRTC = ({
   }, []);
 
   // ------------ 포차 기능 code --------------
-  const [jjanImg, setJjanImg] = useState<any>(require("src/assets/theme/jjan1.png"));
+
   //  axios
   // const api = axios.create({
   //   baseURL: "https://i8e201.p.ssafy.io/api",
@@ -436,20 +431,18 @@ const WebRTC = ({
   const jjan = () => {
     let time: number = 3;
     setCount(String(time));
-    setJjanImg(require("src/assets/theme/jjan1.png"));
     const interval = setInterval(() => {
       time -= 1;
       setCount(String(time));
     }, 1000);
     setTimeout(() => {
       clearInterval(interval);
-      setJjanImg(require("src/assets/theme/jjan2.png"));
       setCount("짠!!!!");
-    }, 3000);
+    }, 3900);
     setTimeout(() => {
       setCount("");
       dispatch(showPublicModal(false));
-    }, 4000);
+    }, 5000);
   };
 
   useEffect(() => {
@@ -458,9 +451,7 @@ const WebRTC = ({
       console.log("포차 설정 변경!----------------------");
       // 방 설정 다시 불러오기!!! 테스트
       getPochaInfo();
-      toast.success("포차 설정이 변경되었습니다");
-      // window.location.reload();
-      // toast.success("포차 정보가 변경되었습니다");
+      toast.success("포차 정보가 변경되었습니다");
       // await pocha_config_update("3");
     });
 
@@ -561,10 +552,9 @@ const WebRTC = ({
         url: `https://i8e201.p.ssafy.io/api/user/info/${username}`,
       });
       console.log("모달용 데이터?", data);
-      dispatch(changeNavAlarmReviewEmojiUserData(data))
-      dispatch(showRoomUserProfile());
-      // setUserProfileData(data);
+      setUserProfileData(data);
       // dispatch(isRtcLoading(false));
+      dispatch(showRoomUserProfile());
     }
   };
   // ---------------- 게임 관련 --------------------
@@ -604,19 +594,9 @@ const WebRTC = ({
       }, 1000);
     });
 
-    // 손병호 게임 시그널받기
-    socket.on("game_son_signal", (signalData) => {
-      transitionDiv.current!.classList.add("opacity-0");
-      console.log("시그널 gameWebRTC에서 받았냐?", signalData);
-      setTimeout(() => {
-        transitionDiv.current!.classList.remove("opacity-0");
-      }, 1000);
-    });
-
     return () => {
       socket.off("game_select");
       socket.off("game_back_select");
-      socket.off("game_son_signal");
     };
   }, []);
 
@@ -643,12 +623,11 @@ const WebRTC = ({
               socket={socket}
             />
           )}
-          {count ? (
-            <div className=" bg-black bg-opacity-70 flex flex-col justify-center z-20 items-center fixed top-0 right-0 bottom-0 left-0">
-              <img src={jjanImg} alt="jjan" />
-              <div className="text-7xl font-bold text-white fixed top-28 z-30">{count}</div>
+          {count && (
+            <div className="bg-orange-500 bg-opacity-30 flex justify-center z-20 items-center fixed top-0 right-0 bottom-0 left-0">
+              <div className="text-7xl font-bold text-white">{count}</div>
             </div>
-          ) : null}
+          )}
           <div className="text-white w-full min-h-[85vh] flex justify-center">
             <div className="flex flex-col justify-evenly items-center">
               {/* <div className="flex flex-wrap justify-evenly items-center p-24"> */}
@@ -697,32 +676,6 @@ const WebRTC = ({
                     />
                   )
                 : null}
-              {selectedId === "son"
-                ? pochaUsers && (
-                    <SonIntro
-                      socket={socket}
-                      pochaId={pochaId}
-                    />
-                  )
-                : null}
-              {selectedId === "bal"
-                ? pochaUsers && (
-                    <Balance
-                      socket={socket}
-                      pochaId={pochaId}
-                      pochaUsers={pochaUsers}
-                    />
-                  )
-                : null}   
-              {selectedId === "liar"
-                ? pochaUsers && (
-                    <LiarIntro
-                      socket={socket}
-                      pochaId={pochaId}
-                      pochaUsers={pochaUsers}
-                    />
-                  )
-                : null}   
             </div>
 
             {/* 사람 공간 */}

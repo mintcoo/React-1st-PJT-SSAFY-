@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "src/store/hooks";
 import {
   showBalancegameeSettingModal,
-  showLiargameSettingModal,
   showYanggameSettingModal,
 } from "src/store/store";
 import YanggameSettingModal from "./GameSetting/YanggameSettingModal";
@@ -35,7 +34,7 @@ const AdminGameSetting = () => {
   };
   const clickLiar = () => {
     console.log("라이어세팅창켜짐!");
-    dispatch(showLiargameSettingModal());
+    dispatch(showYanggameSettingModal());
   };
 
   return (

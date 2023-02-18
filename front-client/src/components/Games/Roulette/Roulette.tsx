@@ -148,13 +148,11 @@ function Roulette({
           <img
             src={require("src/assets/game_roulette/trident.png")}
             className={`${styles.image}`}
-            alt="trident"
           />
           벌칙 룰렛
           <img
             src={require("src/assets/game_roulette/free-icon-devil-725040.png")}
             className={`${styles.image}`}
-            alt="devil"
           />
         </div>
         <div className={`${styles.detail}`}>
@@ -166,7 +164,6 @@ function Roulette({
             <img
               src={require("src/assets/game_roulette/free-icon-right-arrow-724847.png")}
               className={`${styles.arrowImg}`}
-              alt="arrow"
             />
           </div>
           <canvas ref={canvasSketch} width="480" height="480"></canvas>

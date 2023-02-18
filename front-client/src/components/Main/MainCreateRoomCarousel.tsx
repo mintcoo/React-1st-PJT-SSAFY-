@@ -12,7 +12,7 @@ import { useRef } from "react";
 
 
 
-function MainCreateRoomCarousel() {
+function MainCreateRoomCarousel({onClickHiddenBtn} : {onClickHiddenBtn: any}) {
   let dispatch = useAppDispatch();
   const bgDiv = useRef<any>();
 
@@ -21,7 +21,7 @@ function MainCreateRoomCarousel() {
     if(event.target === bgDiv.current) {
       console.log("cliiick")
       dispatch(changeCarouselState())
-      // onClickHiddenBtn();
+      onClickHiddenBtn();
     } else {
       console.log("여기아님");
     }

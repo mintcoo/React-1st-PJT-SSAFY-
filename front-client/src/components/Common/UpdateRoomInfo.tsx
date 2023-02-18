@@ -166,23 +166,20 @@ const UpdateRoomInfo = ({
   useEffect(() => {
     getPochaInfo();
   }, []);
- 
 
   // 포차 정보 업데이트 요청
-  const updateRoom = async (event: React.MouseEvent<HTMLInputElement>) => {
-    const changeThemeId = event.currentTarget.id;
+  const updateRoom = async () => {
     try {
-      // console.log("pochaInfo.isPrivate!@!@!@!@",pochaInfo.isPrivate)
       const updateInfo = await axios({
         method: "PUT",
         url: `https://i8e201.p.ssafy.io/api/pocha/${pochaId}`,
         data: {
           age: createRoomChoiceAge,
-          isPrivate: pochaInfo.isPrivate,
+          isPrivate: false,
           limitUser: createRoomChoicePeople,
           region: createRoomChoiceRegion,
           tagList: choiceTagList,
-          themeId: changeThemeId === "game" ? "T1B0" : createRoomThemeCheck,
+          themeId: createRoomThemeCheck,
         },
       });
       console.log("포차정보수정????", updateInfo);
@@ -262,7 +259,6 @@ const UpdateRoomInfo = ({
                   onClick={updateRoom}
                   className={`${style.createBtn} cursor-pointer`}
                   type="button"
-                  id="story"
                   value="정보수정"
                 />
                 <input
@@ -343,7 +339,6 @@ const UpdateRoomInfo = ({
                   onClick={updateRoom}
                   className={`${style.createBtn} cursor-pointer`}
                   type="button"
-                  id={roomTheme === 2 ? "game" : "meeting"}
                   value="정보수정"
                 />
                 <input

@@ -137,7 +137,7 @@ const RoomUserProfile = ({ userData, pochaId, isHost, socket }: { userData: any,
         >
           <div className={`w-full h-24 flex justify-center items-center`}>
             <img
-              className={`h-full object-fill rounded-full h-[6rem] w-[6rem]`}
+              className={`h-full`}
               src={profile}
               alt="sunglass"
             />
