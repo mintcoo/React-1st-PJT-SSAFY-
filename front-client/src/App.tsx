@@ -17,10 +17,10 @@ import LoginLoading from "./components/Login/LoginLoading";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReviewPage from "./components/ReviewPage/ReviewPage";
-import FriendSearch from "./components/Common/FriendSearch";
 import AdminAdd from "./components/Admin/AdminAdd";
 import AdminGameSetting from "./components/Admin/AdminGameSetting";
 import NewMyPage from "./components/MyPage/NewMypage";
+import PointHistory from "./components/MyPage/PointHistory";
 
 function App() {
   return (
@@ -35,9 +35,9 @@ function App() {
         icon={({ type }) => {
           switch (type) {
             case "success":
-              return "🗨";
+              return "💚";
             case "error":
-              return "💙";
+              return "❗";
             case "info":
               return "🗨";
           }
@@ -58,8 +58,9 @@ function App() {
         <Route path="/loading" element={<Loading />} />
         <Route path="/gameroom/:PochaId" element={<GameRoom />} />
         <Route path="/storyroom/:PochaId" element={<StoryRoom />} />
-        <Route path="/meetingroom/:PochaId" element={<MeetingRoom />} />        
+        <Route path="/meetingroom/:PochaId" element={<MeetingRoom />} />
         <Route path="/newmypage" element={<NewMyPage />} />
+        <Route path="/pointhistory" element={<PointHistory />} />
         <Route path="/adminlogin" element={<AdminLogin />} />
         <Route path="/adminmain" element={<AdminMain />} />
         <Route path="/adminadd" element={<AdminAdd />} />
@@ -69,7 +70,6 @@ function App() {
         <Route path="/roomlist" element={<RoomList />} />
         <Route path="/loginloading" element={<LoginLoading />} />
         <Route path="/review" element={<ReviewPage />} />
-        <Route path="/friendsearch" element={<FriendSearch />} />
         <Route path="/admingamesetting" element={<AdminGameSetting />} />
       </Routes>
     </div>

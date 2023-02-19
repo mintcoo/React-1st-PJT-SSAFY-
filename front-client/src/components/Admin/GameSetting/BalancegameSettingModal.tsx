@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAppDispatch } from "src/store/hooks";
 import { showBalancegameeSettingModal } from "src/store/store";
@@ -7,7 +8,7 @@ import styles from "./BalancegameSettingModal.module.css";
 
 const BalancegameSettingModal = () => {
   const dispatch = useAppDispatch();
-
+  const navigate = useNavigate();
   //useState
   const [Select, setSelect] = useState("0");
   const [Balance, setBalance] = useState<any>();
@@ -56,6 +57,8 @@ const BalancegameSettingModal = () => {
   };
 
   const Save = () => {
+    let accessToken = localStorage.getItem("accessToken");
+
     axios({
       method: "post",
       url: "https://i8e201.p.ssafy.io/api/admin/game/balance",
@@ -64,30 +67,144 @@ const BalancegameSettingModal = () => {
         question2: RightInput,
         type: Select,
       },
+      headers: {
+        accessToken: accessToken,
+      },
     }).then((r) => {
-      const result = r.data.message;
-      if (result === "success") {
-        toast.success("추가되었습니다!");
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        console.log("토큰 이상함");
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
         axios({
           method: "get",
-          url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
         }).then((r) => {
-          // console.log("밸런스 게임 데이터 0", r.data.data);
-          setBalance(r.data.data);
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            console.log("재발급 성공", r.data.accessToken);
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              method: "post",
+              url: "https://i8e201.p.ssafy.io/api/admin/game/balance",
+              data: {
+                question1: LeftInput,
+                question2: RightInput,
+                type: Select,
+              },
+              headers: {
+                accessToken: accessToken,
+              },
+            }).then((r) => {
+              const result = r.data.message;
+              if (result === "success") {
+                toast.success("추가되었습니다!");
+                axios({
+                  method: "get",
+                  url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+
+                  headers: {
+                    accessToken: accessToken,
+                  },
+                }).then((r) => {
+                  // console.log("밸런스 게임 데이터 0", r.data.data);
+                  setBalance(r.data.data);
+                });
+              } else {
+                toast.warning("⛔ 추가 실패 ⛔ ");
+              }
+            });
+          }
         });
-      } else {
-        toast.warning("⛔ 추가 실패 ⛔ ");
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        const result = r.data.message;
+        if (result === "success") {
+          toast.success("추가되었습니다!");
+          axios({
+            method: "get",
+            url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+
+            headers: {
+              accessToken: accessToken,
+            },
+          }).then((r) => {
+            // console.log("밸런스 게임 데이터 0", r.data.data);
+            setBalance(r.data.data);
+          });
+        } else {
+          toast.warning("⛔ 추가 실패 ⛔ ");
+        }
       }
     });
   };
 
   useEffect(() => {
+    let accessToken = localStorage.getItem("accessToken");
+
     axios({
       method: "get",
       url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/0",
+      headers: {
+        accessToken: accessToken,
+      },
     }).then((r) => {
-      // console.log("밸런스 게임 데이터 0", r.data.data);
-      setBalance(r.data.data);
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        console.log("토큰 이상함");
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
+        axios({
+          method: "get",
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
+        }).then((r) => {
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            console.log("재발급 성공", r.data.accessToken);
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              method: "get",
+              url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/0",
+              headers: {
+                accessToken: accessToken,
+              },
+            }).then((r) => {
+              setBalance(r.data.data);
+            });
+          }
+        });
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        setBalance(r.data.data);
+      }
     });
 
     return () => {};
@@ -98,22 +215,74 @@ const BalancegameSettingModal = () => {
       <div
         ref={bgDiv}
         onMouseDown={CloseBalanceSettingModal}
-        className={`z-10 bg-slate-900 bg-opacity-90 fixed top-0 right-0 bottom-0 left-0 flex flex-col justify-center items-center text-white`}
+        className={`z-10 bg-slate-900 bg-opacity-100 fixed top-0 right-0 bottom-0 left-0 flex flex-col justify-center items-center text-white`}
       >
         <div className="w-[80rem] h-[50rem] border-2 border-white rounded-[6rem] flex flex-col justify-center items-center">
-          <div className="h-[11%] w-[78%]">양세찬게임 데이터 header</div>
+          <div className="h-[11%] w-[78%]">BalanceGame</div>
           <div className="h-[10%] w-[78%] flex flex-row justify-start p-">
             <div className="h-[100%] w-[30%] p-5">
               <div
                 className="border-2 h-[100%] w-[100%] rounded-md  cursor-pointer"
                 onClick={() => {
+                  let accessToken = localStorage.getItem("accessToken");
+
                   axios({
                     method: "get",
                     url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/0",
+
+                    headers: {
+                      accessToken: accessToken,
+                    },
                   }).then((r) => {
-                    console.log("밸런스 게임 데이터 0", r.data.data);
-                    setSelect("0");
-                    setBalance(r.data.data);
+                    //토큰이상해
+                    if ("401" === r.data.status) {
+                      //토큰 재요청
+                      console.log("토큰 이상함");
+                      const refreshToken = localStorage.getItem("refreshToken");
+                      const Username = localStorage.getItem("Username");
+                      axios({
+                        method: "get",
+                        url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                        headers: {
+                          refreshToken: refreshToken,
+                        },
+                      }).then((r) => {
+                        //재발급 실패
+                        if ("401" === r.data.status) {
+                          localStorage.clear();
+                          toast.error("인증되지 않은 유저입니다");
+                          navigate("/");
+                        }
+                        //재발급 성공
+                        else {
+                          console.log("재발급 성공", r.data.accessToken);
+                          localStorage.setItem(
+                            "accessToken",
+                            r.data.accessToken
+                          );
+                          accessToken = r.data.accessToken;
+                          axios({
+                            method: "get",
+                            url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/0",
+
+                            headers: {
+                              accessToken: accessToken,
+                            },
+                          }).then((r) => {
+                            console.log("밸런스 게임 데이터 0", r.data.data);
+                            setSelect("0");
+                            setBalance(r.data.data);
+                          });
+                        }
+                      });
+                    }
+                    //토큰 정상이야
+                    else {
+                      //실행 결과값 그대로 실행
+                      console.log("밸런스 게임 데이터 0", r.data.data);
+                      setSelect("0");
+                      setBalance(r.data.data);
+                    }
                   });
                 }}
               >
@@ -124,13 +293,65 @@ const BalancegameSettingModal = () => {
               <div
                 className="border-2 h-[100%] w-[100%] rounded-md cursor-pointer"
                 onClick={() => {
+                  let accessToken = localStorage.getItem("accessToken");
+
                   axios({
                     method: "get",
                     url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/1",
+
+                    headers: {
+                      accessToken: accessToken,
+                    },
                   }).then((r) => {
-                    console.log("밸런스 게임 데이터 1", r.data.data);
-                    setSelect("1");
-                    setBalance(r.data.data);
+                    //토큰이상해
+                    if ("401" === r.data.status) {
+                      //토큰 재요청
+                      console.log("토큰 이상함");
+                      const refreshToken = localStorage.getItem("refreshToken");
+                      const Username = localStorage.getItem("Username");
+                      axios({
+                        method: "get",
+                        url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                        headers: {
+                          refreshToken: refreshToken,
+                        },
+                      }).then((r) => {
+                        //재발급 실패
+                        if ("401" === r.data.status) {
+                          localStorage.clear();
+                          toast.error("인증되지 않은 유저입니다");
+                          navigate("/");
+                        }
+                        //재발급 성공
+                        else {
+                          console.log("재발급 성공", r.data.accessToken);
+                          localStorage.setItem(
+                            "accessToken",
+                            r.data.accessToken
+                          );
+                          accessToken = r.data.accessToken;
+                          //원래 axios 실행
+                          axios({
+                            method: "get",
+                            url: "https://i8e201.p.ssafy.io/api/pocha/game/balance/1",
+                            headers: {
+                              accessToken: accessToken,
+                            },
+                          }).then((r) => {
+                            console.log("밸런스 게임 데이터 1", r.data.data);
+                            setSelect("1");
+                            setBalance(r.data.data);
+                          });
+                        }
+                      });
+                    }
+                    //토큰 정상이야
+                    else {
+                      //실행 결과값 그대로 실행
+                      console.log("밸런스 게임 데이터 1", r.data.data);
+                      setSelect("1");
+                      setBalance(r.data.data);
+                    }
                   });
                 }}
               >
@@ -171,18 +392,85 @@ const BalancegameSettingModal = () => {
                           <td
                             className=" p-2 cursor-pointer hover:scale-125"
                             onClick={() => {
-                              console.log("나 클릭");
+                              let accessToken =
+                                localStorage.getItem("accessToken");
                               axios({
                                 method: "delete",
                                 url: `https://i8e201.p.ssafy.io/api/admin/game/balance/${it.balanceId}`,
+                                headers: {
+                                  accessToken: accessToken,
+                                },
                               }).then((r) => {
-                                axios({
-                                  method: "get",
-                                  url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
-                                }).then((r) => {
-                                  setBalance(r.data.data);
-                                });
-                                toast.success("삭제완료");
+                                //토큰이상해
+                                if ("401" === r.data.status) {
+                                  //토큰 재요청
+                                  console.log("토큰 이상함");
+                                  const refreshToken =
+                                    localStorage.getItem("refreshToken");
+                                  const Username =
+                                    localStorage.getItem("Username");
+                                  axios({
+                                    method: "get",
+                                    url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                                    headers: {
+                                      refreshToken: refreshToken,
+                                    },
+                                  }).then((r) => {
+                                    //재발급 실패
+                                    if ("401" === r.data.status) {
+                                      localStorage.clear();
+                                      toast.error("인증되지 않은 유저입니다");
+                                      navigate("/");
+                                    }
+                                    //재발급 성공
+                                    else {
+                                      console.log(
+                                        "재발급 성공",
+                                        r.data.accessToken
+                                      );
+                                      localStorage.setItem(
+                                        "accessToken",
+                                        r.data.accessToken
+                                      );
+                                      accessToken = r.data.accessToken;
+                                      //원래 axios 실행
+                                      axios({
+                                        method: "delete",
+                                        url: `https://i8e201.p.ssafy.io/api/admin/game/balance/${it.balanceId}`,
+
+                                        headers: {
+                                          accessToken: accessToken,
+                                        },
+                                      }).then((r) => {
+                                        axios({
+                                          method: "get",
+                                          url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+
+                                          headers: {
+                                            accessToken: accessToken,
+                                          },
+                                        }).then((r) => {
+                                          setBalance(r.data.data);
+                                        });
+                                        toast.success("삭제완료");
+                                      });
+                                    }
+                                  });
+                                }
+                                //토큰 정상이야
+                                else {
+                                  //실행 결과값 그대로 실행
+                                  axios({
+                                    method: "get",
+                                    url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+                                    headers: {
+                                      accessToken: accessToken,
+                                    },
+                                  }).then((r) => {
+                                    setBalance(r.data.data);
+                                  });
+                                  toast.success("삭제완료");
+                                }
                               });
                             }}
                           >
@@ -272,6 +560,8 @@ const BalancegameSettingModal = () => {
                     <div
                       className="w-[30%] p-2 border-2 rounded-full cursor-pointer"
                       onClick={() => {
+                        let accessToken = localStorage.getItem("accessToken");
+
                         axios({
                           method: "put",
                           url: `https://i8e201.p.ssafy.io/api/admin/game/balance/${ModifybalanceId}`,
@@ -280,14 +570,83 @@ const BalancegameSettingModal = () => {
                             question2: RightInput,
                             type: Select,
                           },
+
+                          headers: {
+                            accessToken: accessToken,
+                          },
                         }).then((r) => {
-                          toast.success("수정완료");
-                          axios({
-                            method: "get",
-                            url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
-                          }).then((r) => {
-                            setBalance(r.data.data);
-                          });
+                          //토큰이상해
+                          if ("401" === r.data.status) {
+                            //토큰 재요청
+                            console.log("토큰 이상함");
+                            const refreshToken =
+                              localStorage.getItem("refreshToken");
+                            const Username = localStorage.getItem("Username");
+                            axios({
+                              method: "get",
+                              url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                              headers: {
+                                refreshToken: refreshToken,
+                              },
+                            }).then((r) => {
+                              //재발급 실패
+                              if ("401" === r.data.status) {
+                                localStorage.clear();
+                                toast.error("인증되지 않은 유저입니다");
+                                navigate("/");
+                              }
+                              //재발급 성공
+                              else {
+                                console.log("재발급 성공", r.data.accessToken);
+                                localStorage.setItem(
+                                  "accessToken",
+                                  r.data.accessToken
+                                );
+                                accessToken = r.data.accessToken;
+                                //원래 axios 실행
+                                axios({
+                                  method: "put",
+                                  url: `https://i8e201.p.ssafy.io/api/admin/game/balance/${ModifybalanceId}`,
+                                  data: {
+                                    question1: LeftInput,
+                                    question2: RightInput,
+                                    type: Select,
+                                  },
+
+                                  headers: {
+                                    accessToken: accessToken,
+                                  },
+                                }).then((r) => {
+                                  toast.success("수정완료");
+                                  axios({
+                                    method: "get",
+                                    url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+
+                                    headers: {
+                                      accessToken: accessToken,
+                                    },
+                                  }).then((r) => {
+                                    setBalance(r.data.data);
+                                  });
+                                });
+                              }
+                            });
+                          }
+                          //토큰 정상이야
+                          else {
+                            //실행 결과값 그대로 실행
+                            toast.success("수정완료");
+                            axios({
+                              method: "get",
+                              url: `https://i8e201.p.ssafy.io/api/pocha/game/balance/${Select}`,
+
+                              headers: {
+                                accessToken: accessToken,
+                              },
+                            }).then((r) => {
+                              setBalance(r.data.data);
+                            });
+                          }
                         });
                       }}
                     >

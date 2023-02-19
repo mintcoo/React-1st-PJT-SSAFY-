@@ -18,6 +18,9 @@ const PublicModal = ({
   console.log("여기까지는 오니??ㅇㅇ", data);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const userName = localStorage.getItem("Username");
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   // 내 아이디
   const myName = localStorage.getItem("Username");
   const bgDiv = useRef<HTMLDivElement>(null);
@@ -35,12 +38,13 @@ const PublicModal = ({
   const [toUsername, setToUserName] = useState<string>("");
 
   //  axios 요청
-  const api = axios.create({
-    baseURL: "https://i8e201.p.ssafy.io/api",
-    headers: {
-      "Content-Type": "application/json;charset=utf-8",
-    },
-  });
+  // const api = axios.create({
+  //   baseURL: "https://i8e201.p.ssafy.io/api",
+  //   headers: {
+  //     "Content-Type": "application/json;charset=utf-8",
+  //     accessToken: `${accessToken}`,
+  //   },
+  // });
 
   // 메시지 구분하기
   useEffect(() => {
@@ -82,9 +86,48 @@ const PublicModal = ({
   async function handlePochaExtension() {
     // axios를 통해 포차 시간 연장. (await 사용해야할 듯?)
     try {
-      await api.put(`/pocha/extension/${roomName}`);
-      socket.emit("pocha_extension", roomName);
-      toast.success("시간을 연장하였습니다");
+      await axios({
+        method: 'put',
+        url: `https://i8e201.p.ssafy.io/api/pocha/extension/${roomName}`,
+        headers: {
+          refreshToken: `${accessToken}`,
+        }
+      }).then((r)=> {
+        // 토큰 갱신 필요
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+            } else {
+              // 엑세스 토큰 추가
+              localStorage.setItem("accessToken", r.data.accessToken);
+              // 재요청
+              axios({
+                method: 'put',
+                url: `https://i8e201.p.ssafy.io/api/pocha/extension/${roomName}`,
+                headers: {
+                  refreshToken: `${r.data.accessToken}`,
+                }
+              }).then((r)=> {
+                socket.emit("pocha_extension", roomName);
+                toast.success("시간을 연장하였습니다");
+              })
+            }
+          })
+        } else {
+          socket.emit("pocha_extension", roomName);
+          toast.success("시간을 연장하였습니다");
+        }
+      })
     } catch (error) {
       console.log("시간추가 error", error);
     }
@@ -94,8 +137,50 @@ const PublicModal = ({
   async function handlePochaCheers() {
     // axios를 통해 포차 짠 실행.
     try {
-      await api.put(`/pocha/alcohol/${roomName}`);
-      socket.emit("pocha_cheers", roomName);
+      await axios({
+        method:'put',
+        url: `https://i8e201.p.ssafy.io/api/pocha/alcohol/${roomName}`,
+        headers: {
+          refreshToken: `${accessToken}`,
+        }
+      }).then((r)=> {
+        // 토큰 갱신 필요
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            console.log('갱신되서 받아온 값은?: ', r);
+            console.log('갱신되서 받아온 값은?: ', r.data);
+            console.log('갱신되서 받아온 값은?: ', r.data.accessToken);
+            
+            // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+            } else {
+              // 엑세스 토큰 추가
+              localStorage.setItem("accessToken", r.data.accessToken);
+              // 재요청  
+              axios({
+                method:'put',
+                url: `https://i8e201.p.ssafy.io/api/pocha/alcohol/${roomName}`,
+                headers: {
+                  refreshToken: `${r.data.accessToken}`,
+                }
+              }).then((r)=> {
+                socket.emit("pocha_cheers", roomName)
+              })
+            }
+          })
+        } else {
+          socket.emit("pocha_cheers", roomName);
+        }
+      })
     } catch (error) {
       console.log("짠 error", error);
     }
@@ -122,14 +207,54 @@ const PublicModal = ({
     try {
       await axios({
         method: "POST",
-        url: `/api/pocha/invite`,
+        url: `https://i8e201.p.ssafy.io/api/pocha/invite`,
         data: {
           fromUsername: myName,
           pochaId: roomName,
           youId: toUsername,
         },
-      });
-      toast.success(`${nickname}님에게 초대요청을 보냈습니다`);
+        headers: {
+          accessToken: `${accessToken}`,
+        },
+      }).then((r)=> {
+        // 토큰 갱신 필요
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+            } else {
+              // 엑세스 토큰 추가
+              localStorage.setItem("accessToken", r.data.accessToken);
+              // 재요청 
+              axios({
+                method: "POST",
+                url: `https://i8e201.p.ssafy.io/api/pocha/invite`,
+                data: {
+                  fromUsername: myName,
+                  pochaId: roomName,
+                  youId: toUsername,
+                },
+                headers: {
+                  accessToken: `${r.data.accessToken}`,
+                },
+              }).then((r)=> {
+                toast.success(`${nickname}님에게 초대요청을 보냈습니다`);
+              })
+            }
+          })
+        } else {
+          toast.success(`${nickname}님에게 초대요청을 보냈습니다`);
+        }
+      })
     } catch (error) {
       console.log("포차에 친구초대 실패", error);
     }
@@ -170,9 +295,9 @@ const PublicModal = ({
         inviteMyFriend();
         break;
       case "roulette":
-        console.log("게임선택창게임선택창", roomName);
         // 게임선택창으로 돌아가기
-        socket.emit("game_back_select", roomName);
+        dispatch(showRouletteResultModal(false));
+        // socket.emit("game_back_select", roomName);
         break;
     }
     // RoomFooterNavbar에서 모달 끄기

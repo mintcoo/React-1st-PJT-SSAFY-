@@ -15,6 +15,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PublicModal from "../Common/PublicModal";
+import { toast } from "react-toastify";
 
 const MainCreateRoom = ({
   // onClickHiddenBtn,
@@ -25,7 +26,8 @@ const MainCreateRoom = ({
 }): React.ReactElement => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   // username (현재는 내꺼)
   const username = localStorage.getItem("Username");
 
@@ -36,6 +38,7 @@ const MainCreateRoom = ({
   const themeOption = ["테마", "이자카야", "포장마차", "맥주"];
   const peopleOption = ["인원", "2", "3", "4", "5", "6"];
   const meetingPeopleOption = ["인원", "2", "4", "6"];
+  const [secret, setSecret] = useState<boolean>(false);
   const tagList = [
     "소주",
     "맥주",
@@ -68,7 +71,16 @@ const MainCreateRoom = ({
     dispatch(changeThemeRoomState(0));
     dispatch(changeCarouselState());
   };
-
+  // 비밀방 체크 여부
+  const onCheckedSecret = (event: any) => {
+    event.preventDefault();
+    console.log(event.currentTarget.id);
+    if (event.currentTarget.id === "padlock") {
+      setSecret(true);
+      return;
+    }
+    setSecret(false);
+  };
   // 태그 리스트
   const [choiceTagList, setChoiceTagList] = useState<string[]>([]);
   console.log("태그리스트", choiceTagList);
@@ -164,44 +176,121 @@ const MainCreateRoom = ({
                 })}
               </div>
               <div className="flex justify-end w-full mt-10">
+                <div className="flex justify-start items-center w-20">
+                  {secret === false ? (
+                    <img
+                      className="h-10 cursor-pointer"
+                      onClick={onCheckedSecret}
+                      src={require("src/assets/roomIcon/padlock.png")}
+                      id="padlock"
+                      alt="padlock"
+                    />
+                  ) : null}
+                  {secret === true ? (
+                    <img
+                      className="h-10 cursor-pointer"
+                      onClick={onCheckedSecret}
+                      src={require("src/assets/roomIcon/lock.png")}
+                      id="lock"
+                      alt="lock"
+                    />
+                  ) : null}
+                </div>
                 <input
                   className={`${style.createBtn} cursor-pointer`}
                   type="submit"
                   value="포차생성"
                   onClick={() => {
-                    console.log("방 허용 나이", createRoomChoiceAge);
-                    console.log("현재 인원수", createRoomChoicePeople);
-                    console.log("방 허용 지역", createRoomChoiceRegion);
-                    console.log("클릭한 태그", createRoomChoiceTag);
-                    console.log("클릭한 테마Id", createRoomThemeCheck);
-
+                    console.log("비번여부!ㅔ----------!", secret);
                     axios({
                       method: "post",
                       url: "https://i8e201.p.ssafy.io/api/pocha",
                       data: {
                         age: createRoomChoiceAge,
-                        isPrivate: false,
+                        isPrivate: secret,
                         limitUser: createRoomChoicePeople,
                         region: createRoomChoiceRegion,
                         tagList: choiceTagList,
                         themeId: createRoomThemeCheck,
                       },
+                    headers: {
+                      accessToken: `${accessToken}`,
+                    },
                     }).then((r) => {
-                      const PochaId = r.data.data;
-                      axios({
-                        method: "post",
-                        url: "https://i8e201.p.ssafy.io/api/pocha/enter",
-                        data: {
-                          isHost: true,
-                          pochaId: PochaId,
-                          username: username,
-                        },
-                      }).then((r) => {
-                        console.log(r.data);
-                        navigate(`/storyroom/${PochaId}`);
-                        // 방 만들기 창 종료
-                        dispatch(changeThemeRoomState(0));
-                      });
+                      // 토큰 갱신 필요
+                      if (r.data.status === '401') {
+                        axios({
+                          method: 'get',
+                          url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+                          headers: {
+                            refreshToken: `${refreshToken}`,
+                          }
+                        }).then((r)=> {
+                          // 돌려보내기
+                          if (r.data.status === '401') {
+                            localStorage.clear();
+                            toast.error('인증되지 않은 유저입니다')
+                            navigate('/')
+                          } else {
+                             // 엑세스 토큰 추가
+                            localStorage.setItem("accessToken", r.data.accessToken);
+                            // 재요청
+                            axios({
+                              method: "post",
+                              url: "https://i8e201.p.ssafy.io/api/pocha",
+                              data: {
+                                age: createRoomChoiceAge,
+                                isPrivate: secret,
+                                limitUser: createRoomChoicePeople,
+                                region: createRoomChoiceRegion,
+                                tagList: choiceTagList,
+                                themeId: createRoomThemeCheck,
+                              },
+                              headers: {
+                                accessToken: `${r.data.accessToken}`,
+                              },
+                            }).then((r)=> {
+                              const PochaId = r.data.data;
+                              axios({
+                                method: "post",
+                                url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                                data: {
+                                  isHost: true,
+                                  pochaId: PochaId,
+                                  username: username,
+                                },
+                                headers: {
+                                  accessToken: `${localStorage.getItem("accessToken")}`,
+                                },
+                              }).then((r) => {
+                                console.log(r.data);
+                                navigate(`/storyroom/${PochaId}`);
+                                // 방 만들기 창 종료
+                                dispatch(changeThemeRoomState(0));
+                              });
+                            })
+                          }
+                        })
+                      } else {
+                        const PochaId = r.data.data;
+                        axios({
+                          method: "post",
+                          url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                          data: {
+                            isHost: true,
+                            pochaId: PochaId,
+                            username: username,
+                          },
+                          headers: {
+                            accessToken: `${accessToken}`,
+                          },
+                        }).then((r) => {
+                          console.log(r.data);
+                          navigate(`/storyroom/${PochaId}`);
+                          // 방 만들기 창 종료
+                          dispatch(changeThemeRoomState(0));
+                        });
+                      }
                     });
                   }}
                 />
@@ -260,6 +349,26 @@ const MainCreateRoom = ({
                 })}
               </div>
               <div className="flex justify-end w-full mt-10">
+                <div className="flex justify-start items-center w-20">
+                  {secret === false ? (
+                    <img
+                      className="h-10 cursor-pointer"
+                      onClick={onCheckedSecret}
+                      src={require("src/assets/roomIcon/padlock.png")}
+                      id="padlock"
+                      alt="padlock"
+                    />
+                  ) : null}
+                  {secret === true ? (
+                    <img
+                      className="h-10 cursor-pointer"
+                      onClick={onCheckedSecret}
+                      src={require("src/assets/roomIcon/lock.png")}
+                      id="lock"
+                      alt="lock"
+                    />
+                  ) : null}
+                </div>
                 <input
                   className={`${style.createBtn} cursor-pointer`}
                   type="submit"
@@ -270,7 +379,7 @@ const MainCreateRoom = ({
                     console.log("방 허용 지역", createRoomChoiceRegion);
                     console.log("클릭한 태그", createRoomChoiceTag);
                     console.log("클릭한 테마Id", createRoomThemeCheck);
-                    let themeId;
+                    let themeId:any
                     if (roomTheme === 2) {
                       themeId = "T1B0";
                     } else {
@@ -281,31 +390,112 @@ const MainCreateRoom = ({
                       url: "https://i8e201.p.ssafy.io/api/pocha",
                       data: {
                         age: createRoomChoiceAge,
-                        isPrivate: false,
+                        isPrivate: secret,
                         limitUser: createRoomChoicePeople,
                         region: createRoomChoiceRegion,
                         tagList: choiceTagList,
                         themeId: themeId,
                       },
+                      headers: {
+                        accessToken: `${accessToken}`,
+                      },
                     }).then((r) => {
-                      const PochaId = r.data.data;
-                      axios({
-                        method: "post",
-                        url: "https://i8e201.p.ssafy.io/api/pocha/enter",
-                        data: {
-                          isHost: true,
-                          pochaId: PochaId,
-                          username: username,
-                        },
-                      }).then((r) => {
-                        if (roomTheme === 2) {
-                          navigate(`/gameroom/${PochaId}`);
-                        } else if (roomTheme === 3) {
-                          navigate(`/meetingroom/${PochaId}`);
-                        }
-                        // 방 만들기 창 종료
-                        dispatch(changeThemeRoomState(0));
-                      });
+                      // 토큰 갱신 필요
+                      if (r.data.status === '401') {
+                        axios({
+                          method: 'get',
+                          url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+                          headers: {
+                            refreshToken: `${refreshToken}`,
+                          }
+                        }).then((r)=> {
+                          // 돌려보내기
+                          if (r.data.status === '401') {
+                            localStorage.clear();
+                            toast.error('인증되지 않은 유저입니다')
+                            navigate('/')
+                          } else {
+                            // 엑세스 토큰 추가
+                            localStorage.setItem("accessToken", r.data.accessToken);
+                            // 재요청
+                            axios({
+                              method: "post",
+                              url: "https://i8e201.p.ssafy.io/api/pocha",
+                              data: {
+                                age: createRoomChoiceAge,
+                                isPrivate: secret,
+                                limitUser: createRoomChoicePeople,
+                                region: createRoomChoiceRegion,
+                                tagList: choiceTagList,
+                                themeId: themeId,
+                              },
+                              headers: {
+                                accessToken: `${r.data.accessToken}`,
+                              },
+                            }).then((r)=> {
+                              axios({
+                                method: "post",
+                                url: "https://i8e201.p.ssafy.io/api/pocha",
+                                data: {
+                                  age: createRoomChoiceAge,
+                                  isPrivate: secret,
+                                  limitUser: createRoomChoicePeople,
+                                  region: createRoomChoiceRegion,
+                                  tagList: choiceTagList,
+                                  themeId: themeId,
+                                },
+                                headers: {
+                                  accessToken: `${localStorage.getItem("accessToken")}`,
+                                },
+                              }).then((r)=> {
+                                const PochaId = r.data.data;
+                                axios({
+                                  method: "post",
+                                  url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                                  data: {
+                                    isHost: true,
+                                    pochaId: PochaId,
+                                    username: username,
+                                  },
+                                  headers: {
+                                    accessToken: `${localStorage.getItem("accessToken")}`,
+                                  },
+                                }).then((r) => {
+                                  if (roomTheme === 2) {
+                                    navigate(`/gameroom/${PochaId}`);
+                                  } else if (roomTheme === 3) {
+                                    navigate(`/meetingroom/${PochaId}`);
+                                  }
+                                  // 방 만들기 창 종료
+                                  dispatch(changeThemeRoomState(0));
+                                });
+                              })
+                            })
+                          }
+                        })
+                      } else {
+                        const PochaId = r.data.data;
+                        axios({
+                          method: "post",
+                          url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                          data: {
+                            isHost: true,
+                            pochaId: PochaId,
+                            username: username,
+                          },
+                          headers: {
+                            accessToken: `${accessToken}`,
+                          },
+                        }).then((r) => {
+                          if (roomTheme === 2) {
+                            navigate(`/gameroom/${PochaId}`);
+                          } else if (roomTheme === 3) {
+                            navigate(`/meetingroom/${PochaId}`);
+                          }
+                          // 방 만들기 창 종료
+                          dispatch(changeThemeRoomState(0));
+                        });
+                      }
                     });
                   }}
                 />

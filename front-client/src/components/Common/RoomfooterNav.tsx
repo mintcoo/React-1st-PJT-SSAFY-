@@ -1,7 +1,10 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAppDispatch, useAppSelector } from "src/store/hooks";
 import {
+  changeEnterPochaType,
   inviteMyFriend,
   showPublicModal,
   showUpdatePocha,
@@ -17,16 +20,25 @@ function RoomFooterNav({
   pochaId,
   socket,
   isHost,
+  onClickPlayer,
 }: {
   pochaId: string;
   socket: any;
   isHost: boolean;
+  onClickPlayer?: Function;
 }): JSX.Element {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate()
+  const userName = localStorage.getItem("Username");
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const myName = localStorage.getItem("Username");
   // 룸 이름
   const roomName = pochaId;
+  // 배경음 켜고 끄기
+  const [playing, setPlaying] = useState<boolean>(true);
+  
   // Public모달 데이터
   const [modalData, setModalData] = useState<any>(null);
   // 현재 포차테마 가져올 주소
@@ -36,10 +48,13 @@ function RoomFooterNav({
   useEffect(() => {
     if (url.indexOf("story") !== -1) {
       setRoomTheme(1);
+      dispatch(changeEnterPochaType(1))
     } else if (url.indexOf("game") !== -1) {
       setRoomTheme(2);
+      dispatch(changeEnterPochaType(2))
     } else if (url.indexOf("meeting") !== -1) {
       setRoomTheme(3);
+      dispatch(changeEnterPochaType(3))
     }
     setTimeout(() => {
       setIsLoading(false);
@@ -55,6 +70,15 @@ function RoomFooterNav({
     let minutes = ("0" + date.getMinutes()).slice(-2);
     setCurrentDate((hour + ":" + minutes) as any);
   }, 1000);
+
+  // 음악 끄는거 관련
+  const onClickMusic = () => {
+    if (onClickPlayer) {
+      onClickPlayer();
+      setPlaying((prev) => !prev);
+    }
+    return
+  }
 
   // Public 모달 보이기 관련
   const showModal = useAppSelector((state) => {
@@ -140,19 +164,19 @@ function RoomFooterNav({
     dispatch(showUpdateRoom(true));
   };
 
-  const onClickChangePocha = () => {
-    // 방장 체크후 처리
-    if (!isHost) {
-      setModalData({
-        type: "host",
-        nickname: "포차수정은",
-        msg: "방장만 가능합니다",
-      });
-      dispatch(showPublicModal(true));
-      return;
-    }
-    dispatch(showUpdatePocha(true));
-  }
+  // const onClickChangePocha = () => {
+  //   // 방장 체크후 처리
+  //   if (!isHost) {
+  //     setModalData({
+  //       type: "host",
+  //       nickname: "포차수정은",
+  //       msg: "방장만 가능합니다",
+  //     });
+  //     dispatch(showPublicModal(true));
+  //     return;
+  //   }
+  //   dispatch(showUpdatePocha(true));
+  // }
 
   // 친구 초대 창 켜기
   const onClickInviteFriend = () => {
@@ -171,21 +195,66 @@ function RoomFooterNav({
       dispatch(showPublicModal(true));
       return;
     }
-    let input = prompt("Ssul을 입력하세요!", "새로운 타이틀!");
+    let input = prompt("Ssul을 입력하세요!", "썰을 등록해주세요");
     if (input == null) return;
+    if (input.length > 20) {
+      alert("썰 제한은 20글자 입니다");
+      handleSsulClick();
+      return
+    }
     try {
       await axios({
         method: "PUT",
-        url: `https://i8e201.p.ssafy.io//api/pocha/talk/ssul/${roomName}`,
+        url: `https://i8e201.p.ssafy.io/api/pocha/talk/ssul/${roomName}`,
         data: {
           ssulTitle: input,
           username: myName,
         },
-      });
-      // webRTC 썰 변경.
-      socket.emit("ssul_change", roomName, input);
-    } catch (error) {
-      console.log("썰 변경 요청에러", error);
+        headers: {
+          accessToken: `${accessToken}`,
+        },
+      }).then((r)=> {
+        // 토큰 갱신 필요
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+              } else {
+                // 엑세스 토큰 추가
+                localStorage.setItem("accessToken", r.data.accessToken);
+                // 재요청  
+                axios({
+                  method: "PUT",
+                  url: `https://i8e201.p.ssafy.io/api/pocha/talk/ssul/${roomName}`,
+                  data: {
+                    ssulTitle: input,
+                    username: myName,
+                  },
+                  headers: {
+                    accessToken: `${r.data.accessToken}`,
+                  },
+                }).then((r)=> {
+                  // webRTC 썰 변경.
+                  socket.emit("ssul_change", roomName, input);
+                })
+              } 
+            })
+          } else {
+          // webRTC 썰 변경.
+          socket.emit("ssul_change", roomName, input);
+          }
+        })      
+      } catch (error) {
+        console.log("썰 변경 요청에러", error);
     }
   }
 
@@ -215,26 +284,26 @@ function RoomFooterNav({
           <div className="flex justify-center items-center text-[2rem] ">
             {currentDate}
           </div>
-          <div className="flex flex-col justify-center items-center min-h-full max-h-full cursor-pointer">
+          <div className="flex flex-col justify-center items-center min-h-full max-h-full cursor-pointer w-[3.2rem]">
             <img
-              onClick={onClickShowModal}
-              className="h-[2.2rem] py-auto transition-all duration-300 hover:scale-110"
-              src={require("src/assets/roomIcon/time.png")}
+              onClick={onClickMusic}
+              className="h-[2.2rem] py-[0.2rem] transition-all duration-300 hover:scale-110"
+              src={playing ? require("src/assets/roomIcon/pause.png") : require("src/assets/roomIcon/play.png")}
               alt="addTime"
               id="addTime"
             />
-            <span className="text-[0.8rem] mt-1">시간추가</span>
+            <span className="text-[0.8rem] mt-1">{playing ? `BGM Off` : 'BGM On'}</span>
           </div>
-          <div className="flex flex-col justify-center items-center min-h-full max-h-full cursor-pointer">
+          {/* <div className="flex flex-col justify-center items-center min-h-full max-h-full cursor-pointer">
             <img
               onClick={onClickChangePocha}
               className="h-[2.2rem] py-auto transition-all duration-300 hover:scale-110"
-              src={require("src/assets/roomIcon/exclamation-mark.png")}
+              src={roomTheme === 1 ? require("src/assets/roomIcon/game_control.png") : require("src/assets/roomIcon/story_chat.png")}
               alt="change"
               id="change"
             />
-            <span className="text-[0.8rem] mt-1">포차변경</span>
-          </div>
+            <span className="text-[0.8rem] mt-1">{roomTheme === 1 ? "게임포차" : "소통포차"}</span>
+          </div> */}
           <div className="flex flex-col justify-center items-center min-h-full max-h-full cursor-pointer">
             <img
               onClick={onClickShowModal}

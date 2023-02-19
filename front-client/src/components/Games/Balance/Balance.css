@@ -24,7 +24,7 @@
   border: solid 2px;
   width: 54rem;
   margin: 0 auto;
-  height: 48.9rem;
+  height: 49.9rem;
   background-color: #000000;
   border-radius: 1rem;
 }
@@ -67,9 +67,9 @@
   cursor: pointer;
 }
 
-.button:hover {
+/* .button:hover {
   color: #ff6e7f;
-}
+} */
 
 .subjects {
   border: 4px solid transparent;
@@ -95,9 +95,9 @@
   cursor: pointer;
 }
 
-.buttons > div:hover {
+/* .buttons > div:hover {
   color: #ff6e7f;
-}
+} */
 
 .select {
   width: 50%;
@@ -157,18 +157,27 @@
 .imgDiv {
   display: flex;
   justify-content: center;
-  padding-top: 7rem;
+  padding-top: 8rem;
   transition: all 0.5s;
 }
 
 .imgDiv:hover {
-  padding-top: 5rem;
+  padding-top: 6.6rem;
 }
 
 .romOrNor{
   transition: all 0.7s;
 }
 
-.romOrNor:hover {
+/* .romOrNor:hover {
   color: #ff6e7f;
+} */
+
+.gameBox {
+  /* cursor: pointer;
+  transition: all 0.5s; */
+  text-shadow: 0 0 5px #ff6e7f,
+  0 0 10px #ff6e7f,
+  0 0 20px #ff6e7f;
+  transform: scale(1.1);
 }

@@ -11,15 +11,22 @@ const MainCreateRoomPeople = ({ selectOption, pochaInfo }: { selectOption: strin
 
   useEffect(() => {
     // 포차 정보 있을때
+    console.log('포차정보: ', pochaInfo);
+    
     if (pochaInfo) {
-      const index = pochaInfo.limitUser - 2;
-      // console.log("인덱스", index);
-      selectHumans.current[index].classList.toggle("text-black");
-      selectHumans.current[index].classList.toggle("bg-white");
+      const index = Number(pochaInfo.limitUser) - 2;
+      console.log("포차 정보", pochaInfo);
+      console.log("인덱스", index);
+      console.log(selectHumans.current[index]);
+      
+      selectHumans.current[index]?.classList.toggle("text-black");
+      selectHumans.current[index]?.classList.toggle("bg-white");
       setPeople(selectHumans.current[index]);
       dispatch(changeCreateRoomChoicePeople(pochaInfo.limitUser));
       return
     }
+    console.log("정보 없을 때 ", selectHumans.current[0]);
+    
     // 처음에 제일 첫번째 값 선택세팅
     selectHumans.current[0].classList.toggle("text-black");
     selectHumans.current[0].classList.toggle("bg-white");

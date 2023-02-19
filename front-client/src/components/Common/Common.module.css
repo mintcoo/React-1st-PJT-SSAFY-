@@ -143,7 +143,6 @@
 
 .friednSentence {
   animation: blink-effect 1s step-end infinite;
-
 }
 
 .xBtn {
@@ -154,3 +153,4 @@
   color: #EF6003;
   transition: all 0.3s;
 }
+

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { changeAdminReport } from "src/store/store";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 function UserReportWait(): React.ReactElement {
@@ -11,11 +12,54 @@ function UserReportWait(): React.ReactElement {
     return state.adminreport;
   });
   useEffect(() => {
+    let accessToken = localStorage.getItem("accessToken");
     axios({
       method: "get",
       url: "https://i8e201.p.ssafy.io/api/admin/report",
+      headers: {
+        accessToken: accessToken,
+      },
     }).then((r) => {
-      dispatch(changeAdminReport(r.data.data));
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
+        axios({
+          method: "get",
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
+        }).then((r) => {
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              method: "get",
+              url: "https://i8e201.p.ssafy.io/api/admin/report",
+              headers: {
+                accessToken: accessToken,
+              },
+            }).then((r) => {
+              dispatch(changeAdminReport(r.data.data));
+            });
+          }
+        });
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        dispatch(changeAdminReport(r.data.data));
+      }
     });
   }, []);
   return (
@@ -52,7 +96,7 @@ function UserReportWait(): React.ReactElement {
                         <td
                           className="w-[7%] cursor-pointer hover:animate-spin"
                           onClick={() => {
-                            let demeritnum;
+                            let demeritnum: any;
                             if (it.reportType === 0) {
                               demeritnum = 2;
                             } else if (it.reportType === 1) {
@@ -65,7 +109,9 @@ function UserReportWait(): React.ReactElement {
                               demeritnum = 2;
                             }
                             // console.log(demeritnum);
-
+                            let accessToken =
+                              localStorage.getItem("accessToken");
+                            //수락하기
                             axios({
                               method: "put",
                               url: `https://i8e201.p.ssafy.io/api/admin/report/${it.reportId}`,
@@ -73,14 +119,121 @@ function UserReportWait(): React.ReactElement {
                                 demerit: demeritnum,
                                 reportResult: 1,
                               },
+                              headers: {
+                                accessToken: accessToken,
+                              },
                             }).then((r) => {
-                              console.log(r.data);
+                              //토큰이상해
+                              if ("401" === r.data.status) {
+                                //토큰 재요청
+                                const refreshToken =
+                                  localStorage.getItem("refreshToken");
+                                const Username =
+                                  localStorage.getItem("Username");
+                                axios({
+                                  method: "get",
+                                  url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                                  headers: {
+                                    refreshToken: refreshToken,
+                                  },
+                                }).then((r) => {
+                                  //재발급 실패
+                                  if ("401" === r.data.status) {
+                                    localStorage.clear();
+                                    toast.error("인증되지 않은 유저입니다");
+                                    navigate("/");
+                                  }
+                                  //재발급 성공
+                                  else {
+                                    localStorage.setItem(
+                                      "accessToken",
+                                      r.data.accessToken
+                                    );
+                                    accessToken = r.data.accessToken;
+                                    //원래 axios 실행
+                                    axios({
+                                      method: "put",
+                                      url: `https://i8e201.p.ssafy.io/api/admin/report/${it.reportId}`,
+                                      data: {
+                                        demerit: demeritnum,
+                                        reportResult: 1,
+                                      },
+                                      headers: {
+                                        accessToken: accessToken,
+                                      },
+                                    }).then((r) => {
+                                      console.log(r.data);
+                                    });
+                                  }
+                                });
+                              }
+                              //토큰 정상이야
+                              else {
+                                //실행 결과값 그대로 실행
+                                console.log(r.data);
+                              }
                             });
+                            //갱신
                             axios({
                               method: "get",
                               url: "https://i8e201.p.ssafy.io/api/admin/report",
+                              headers: {
+                                accessToken: accessToken,
+                              },
                             }).then((r) => {
-                              dispatch(changeAdminReport(r.data.data));
+                              //토큰이상해
+                              if ("401" === r.data.status) {
+                                //토큰 재요청
+                                const refreshToken =
+                                  localStorage.getItem("refreshToken");
+                                const Username =
+                                  localStorage.getItem("Username");
+                                axios({
+                                  method: "get",
+                                  url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                                  headers: {
+                                    refreshToken: refreshToken,
+                                  },
+                                }).then((r) => {
+                                  //재발급 실패
+                                  if ("401" === r.data.status) {
+                                    localStorage.clear();
+                                    toast.error("인증되지 않은 유저입니다");
+                                    navigate("/");
+                                  }
+                                  //재발급 성공
+                                  else {
+                                    localStorage.setItem(
+                                      "accessToken",
+                                      r.data.accessToken
+                                    );
+                                    accessToken = r.data.accessToken;
+                                    //원래 axios 실행
+                                    axios({
+                                      method: "get",
+                                      url: "https://i8e201.p.ssafy.io/api/admin/report",
+                                      headers: {
+                                        accessToken: accessToken,
+                                      },
+                                    }).then((r) => {
+                                      dispatch(changeAdminReport(r.data.data));
+                                    });
+                                  }
+                                });
+                              }
+                              //토큰 정상이야
+                              else {
+                                //실행 결과값 그대로 실행
+                                axios({
+                                  method: "get",
+                                  url: "https://i8e201.p.ssafy.io/api/admin/report",
+                                  headers: {
+                                    accessToken: accessToken,
+                                  },
+                                }).then((r) => {
+                                  dispatch(changeAdminReport(r.data.data));
+                                });
+                              }
                             });
                           }}
                         >
@@ -89,6 +242,9 @@ function UserReportWait(): React.ReactElement {
                         <td
                           className="w-[7%] cursor-pointer hover:animate-spin"
                           onClick={() => {
+                            let accessToken =
+                              localStorage.getItem("accessToken");
+                            //거절
                             axios({
                               method: "put",
                               url: `https://i8e201.p.ssafy.io/api/admin/report/${it.reportId}`,
@@ -96,14 +252,113 @@ function UserReportWait(): React.ReactElement {
                                 demerit: 0,
                                 reportResult: 1,
                               },
+                              headers: {
+                                accessToken: accessToken,
+                              },
                             }).then((r) => {
-                              console.log(r.data);
+                              //토큰이상해
+                              if ("401" === r.data.status) {
+                                //토큰 재요청
+                                const refreshToken =
+                                  localStorage.getItem("refreshToken");
+                                const Username =
+                                  localStorage.getItem("Username");
+                                axios({
+                                  method: "get",
+                                  url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                                  headers: {
+                                    refreshToken: refreshToken,
+                                  },
+                                }).then((r) => {
+                                  //재발급 실패
+                                  if ("401" === r.data.status) {
+                                    localStorage.clear();
+                                    toast.error("인증되지 않은 유저입니다");
+                                    navigate("/");
+                                  }
+                                  //재발급 성공
+                                  else {
+                                    localStorage.setItem(
+                                      "accessToken",
+                                      r.data.accessToken
+                                    );
+                                    accessToken = r.data.accessToken;
+                                    //원래 axios 실행
+                                    axios({
+                                      method: "put",
+                                      url: `https://i8e201.p.ssafy.io/api/admin/report/${it.reportId}`,
+                                      data: {
+                                        demerit: 0,
+                                        reportResult: 1,
+                                      },
+                                      headers: {
+                                        accessToken: accessToken,
+                                      },
+                                    }).then((r) => {
+                                      console.log(r.data);
+                                    });
+                                  }
+                                });
+                              }
+                              //토큰 정상이야
+                              else {
+                                //실행 결과값 그대로 실행
+                                console.log(r.data);
+                              }
                             });
+                            //갱신
                             axios({
                               method: "get",
                               url: "https://i8e201.p.ssafy.io/api/admin/report",
+                              headers: {
+                                accessToken: accessToken,
+                              },
                             }).then((r) => {
-                              dispatch(changeAdminReport(r.data.data));
+                              //토큰이상해
+                              if ("401" === r.data.status) {
+                                //토큰 재요청
+                                const refreshToken =
+                                  localStorage.getItem("refreshToken");
+                                const Username =
+                                  localStorage.getItem("Username");
+                                axios({
+                                  method: "get",
+                                  url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                                  headers: {
+                                    refreshToken: refreshToken,
+                                  },
+                                }).then((r) => {
+                                  //재발급 실패
+                                  if ("401" === r.data.status) {
+                                    localStorage.clear();
+                                    toast.error("인증되지 않은 유저입니다");
+                                    navigate("/");
+                                  }
+                                  //재발급 성공
+                                  else {
+                                    localStorage.setItem(
+                                      "accessToken",
+                                      r.data.accessToken
+                                    );
+                                    accessToken = r.data.accessToken;
+                                    //원래 axios 실행
+                                    axios({
+                                      method: "get",
+                                      url: "https://i8e201.p.ssafy.io/api/admin/report",
+                                      headers: {
+                                        accessToken: accessToken,
+                                      },
+                                    }).then((r) => {
+                                      dispatch(changeAdminReport(r.data.data));
+                                    });
+                                  }
+                                });
+                              }
+                              //토큰 정상이야
+                              else {
+                                //실행 결과값 그대로 실행
+                                dispatch(changeAdminReport(r.data.data));
+                              }
                             });
                           }}
                         >

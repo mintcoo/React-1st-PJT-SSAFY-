@@ -6,6 +6,10 @@ import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import { useAppDispatch, useAppSelector } from "src/store/hooks";
 import {
+  balanceChange,
+  balanceQuestionChange,
+  changeNavAlarmReviewEmojiUserData,
+  isRomanNormalChange,
   isRtcLoading,
   selectGame,
   showGameSelectModal,
@@ -15,9 +19,14 @@ import {
 } from "../../store/store";
 import Loading from "../Common/Loading";
 import RoomUserProfile from "../Common/RoomUserProfile";
+import Balance from "../Games/Balance/Balance";
+import CallIntro from "../Games/CallMyName/CallIntro";
 import GameSelect from "../Games/GameSelect/GameSelect";
 import LadderIntro from "../Games/Ladder/LadderIntro";
+import LiarIntro from "../Games/Liar/LiarIntro";
 import Roulette from "../Games/Roulette/Roulette";
+import SonIntro from "../Games/Son/SonIntro";
+import TwentyIntro from "../Games/Twenty/TwentyIntro";
 // webRTC관련
 const socket = io("https://pocha.online");
 
@@ -34,6 +43,7 @@ const WebRTC = ({
 }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  let accessToken = localStorage.getItem("accessToken");
   const myUserName = localStorage.getItem("Username");
   // 나의 비디오 ref
   const myFace = useRef<HTMLVideoElement>(null);
@@ -55,6 +65,14 @@ const WebRTC = ({
   const peerFace3 = useRef<any>(null);
   const peerFace4 = useRef<any>(null);
   const peerFace5 = useRef<any>(null);
+
+  // useRef 배열
+  const div1 = useRef<HTMLDivElement>(null);
+  const div2 = useRef<HTMLDivElement>(null);
+  const div3 = useRef<HTMLDivElement>(null);
+  const div4 = useRef<HTMLDivElement>(null);
+  const div5 = useRef<HTMLDivElement>(null);
+  const div6 = useRef<HTMLDivElement>(null);
 
   const myStream = useRef<any>(null);
   // let myStream: any;
@@ -86,39 +104,119 @@ const WebRTC = ({
   // 포차 참여유저 데이터 axios 요청
   async function getUsersProfile() {
     console.log(pochaId);
-    try {
-      const {
-        data: { data },
-      } = await axios({
-        url: `https://i8e201.p.ssafy.io/api/pocha/participant/${pochaId}`,
-      });
-      const lastIndex = data.length - 1;
-      console.log("참여 유저들 데이터?", data);
-      // 방장 여부 체크
-      data.forEach((user: any) => {
-        if (user.username === myUserName) {
-          setIsHost(user.isHost);
-          propIsHost(user.isHost);
-        }
-      });
-      setPochaUsers(data);
-      dispatch(isRtcLoading(false));
-      handleWelcomeSubmit(data[lastIndex]);
-    } catch (error) {
-      console.log("포차 참여유저 데이터 axios error", error);
-    }
+
+    //   try {
+    //     const {
+    //       data: { data },
+    //     } = await axios({
+    //       url: `https://i8e201.p.ssafy.io/api/pocha/participant/${pochaId}`,
+    //       headers: {
+    //         accessToken: `${accessToken}`,
+    //       },
+    //     });
+    //     const lastIndex = data.length - 1;
+    //     console.log("참여 유저들 데이터?", data);
+    //     // 방장 여부 체크
+    //     data.forEach((user: any) => {
+    //       if (user.username === myUserName) {
+    //         setIsHost(user.isHost);
+    //         propIsHost(user.isHost);
+    //       }
+    //     });
+    //     setPochaUsers(data);
+    //     dispatch(isRtcLoading(false));
+    //     handleWelcomeSubmit(data[lastIndex]);
+    //   } catch (error) {
+    //     console.log("포차 참여유저 데이터 axios error", error);
+    //   }
+    // }
+
+    axios({
+      url: `https://i8e201.p.ssafy.io/api/pocha/participant/${pochaId}`,
+      headers: {
+        accessToken: `${accessToken}`,
+      },
+    }).then((r) => {
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        console.log("토큰 이상함");
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
+        axios({
+          method: "get",
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
+        }).then((r) => {
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            console.log("재발급 성공", r.data.accessToken);
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              url: `https://i8e201.p.ssafy.io/api/pocha/participant/${pochaId}`,
+              headers: {
+                accessToken: `${accessToken}`,
+              },
+            }).then((r) => {
+              const lastIndex = r.data.data.length - 1;
+              console.log("참여 유저들 데이터?", r.data.data);
+              // 방장 여부 체크
+              r.data.data.forEach((user: any) => {
+                if (user.username === myUserName) {
+                  setIsHost(user.isHost);
+                  propIsHost(user.isHost);
+                }
+              });
+              setPochaUsers(r.data.data);
+              dispatch(isRtcLoading(false));
+              handleWelcomeSubmit(r.data.data[lastIndex]);
+            });
+          }
+        });
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        const lastIndex = r.data.data.length - 1;
+        console.log("참여 유저들 데이터?", r.data.data);
+        // 방장 여부 체크
+        r.data.data.forEach((user: any) => {
+          if (user.username === myUserName) {
+            setIsHost(user.isHost);
+            propIsHost(user.isHost);
+          }
+        });
+        setPochaUsers(r.data.data);
+        dispatch(isRtcLoading(false));
+        handleWelcomeSubmit(r.data.data[lastIndex]);
+      }
+    });
   }
 
   // 카메라 뮤트
-  let muted = false;
+  const [muted, setMuted] = useState<boolean>(false);
   // 카메라 오프
-  let cameraOff = false;
+  const [cameraOff, setCameraOff] = useState<boolean>(false);
   // let userCount = 1;
 
   // 최초실행
   useEffect(() => {
     propSocket(socket);
     getUsersProfile();
+    // userCount.current = 1
+    return () => {
+      userCount.current = 1;
+    };
   }, []);
 
   const getCameras = async () => {
@@ -177,6 +275,7 @@ const WebRTC = ({
       }
       console.log("마이스트림 오냐?", myStream.current);
       myFace.current!.srcObject = myStream.current;
+      myFace.current!.volume = 0;
       if (!deviceId) {
         await getCameras();
       }
@@ -190,12 +289,12 @@ const WebRTC = ({
     myStream.current
       .getAudioTracks()
       .forEach((track: any) => (track.enabled = !track.enabled));
-    if (!muted) {
-      muteBtn.current!.innerText = "🔈";
-    } else {
-      muteBtn.current!.innerText = "🔊";
-    }
-    muted = !muted;
+    // if (!muted) {
+    //   muteBtn.current!.innerText = "🔈";
+    // } else {
+    //   muteBtn.current!.innerText = "🔊";
+    // }
+    setMuted((prev) => !prev);
   }
 
   // 카메라 끄는 함수
@@ -204,12 +303,12 @@ const WebRTC = ({
     myStream.current
       .getVideoTracks()
       .forEach((track: any) => (track.enabled = !track.enabled));
-    if (!cameraOff) {
-      cameraBtn.current!.innerText = "Camera On";
-    } else {
-      cameraBtn.current!.innerText = "Camera Off";
-    }
-    cameraOff = !cameraOff;
+    // if (!cameraOff) {
+    //   cameraBtn.current!.innerText = "Camera On";
+    // } else {
+    //   cameraBtn.current!.innerText = "Camera Off";
+    // }
+    setCameraOff((prev) => !prev);
   }
 
   // 카메라 바꿀때 옵션 변경했으니 getMedia 다시실행해준다(이제는 특정카메라id도 담아서 실행)
@@ -403,7 +502,7 @@ const WebRTC = ({
     });
 
     socket.on("room_full", () => {
-      toast.info("풀방입니다");
+      toast.info("인원이 가득찬 포차입니다");
       navigate(`/main`);
     });
 
@@ -419,7 +518,9 @@ const WebRTC = ({
   }, []);
 
   // ------------ 포차 기능 code --------------
-
+  const [jjanImg, setJjanImg] = useState<any>(
+    require("src/assets/theme/jjan1.png")
+  );
   //  axios
   // const api = axios.create({
   //   baseURL: "https://i8e201.p.ssafy.io/api",
@@ -431,18 +532,20 @@ const WebRTC = ({
   const jjan = () => {
     let time: number = 3;
     setCount(String(time));
+    setJjanImg(require("src/assets/theme/jjan1.png"));
     const interval = setInterval(() => {
       time -= 1;
       setCount(String(time));
     }, 1000);
     setTimeout(() => {
       clearInterval(interval);
+      setJjanImg(require("src/assets/theme/jjan2.png"));
       setCount("짠!!!!");
-    }, 3900);
+    }, 3000);
     setTimeout(() => {
       setCount("");
       dispatch(showPublicModal(false));
-    }, 5000);
+    }, 4000);
   };
 
   useEffect(() => {
@@ -451,7 +554,9 @@ const WebRTC = ({
       console.log("포차 설정 변경!----------------------");
       // 방 설정 다시 불러오기!!! 테스트
       getPochaInfo();
-      toast.success("포차 정보가 변경되었습니다");
+      toast.success("포차 설정이 변경되었습니다");
+      // window.location.reload();
+      // toast.success("포차 정보가 변경되었습니다");
       // await pocha_config_update("3");
     });
 
@@ -523,21 +628,68 @@ const WebRTC = ({
 
     console.log("사람수ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ", indexData);
 
+    // if (userCount.current === 1) {
+    //   peerFace1.current.srcObject = stream;
+    //   peerFace1.current.id = username;
+    // } else if (userCount.current === 2) {
+    //   peerFace2.current.srcObject = stream;
+    //   peerFace2.current.id = username;
+    // } else if (userCount.current === 3) {
+    //   peerFace3.current.srcObject = stream;
+    //   peerFace3.current.id = username;
+    // } else if (userCount.current === 4) {
+    //   peerFace4.current.srcObject = stream;
+    //   peerFace4.current.id = username;
+    // } else if (userCount.current === 5) {
+    //   peerFace5.current.srcObject = stream;
+    //   peerFace5.current.id = username;
+    // }
     if (userCount.current === 1) {
-      peerFace1.current.srcObject = stream;
-      peerFace1.current.id = username;
+      div3.current!.classList.add("hidden");
+      peerFace2.current!.classList.add("hidden");
+      peerFace1.current!.srcObject = stream;
+      peerFace1.current!.id = username;
+      // if(peerInfo.isHost){
+      //   peerFace1.current!.classList.add("border-8")
+      // }
     } else if (userCount.current === 2) {
-      peerFace2.current.srcObject = stream;
-      peerFace2.current.id = username;
+      div3.current!.classList.remove("hidden");
+      peerFace2.current!.classList.remove("hidden");
+      div4.current!.classList.add("hidden");
+      peerFace3.current!.classList.add("hidden");
+      peerFace2.current!.srcObject = stream;
+      peerFace2.current!.id = username;
+      // if(peerInfo.isHost){
+      //   peerFace2.current!.classList.add("border-8")
+      // }
     } else if (userCount.current === 3) {
-      peerFace3.current.srcObject = stream;
-      peerFace3.current.id = username;
+      div4.current!.classList.remove("hidden");
+      peerFace3.current!.classList.remove("hidden");
+      div5.current!.classList.add("hidden");
+      peerFace4.current!.classList.add("hidden");
+      peerFace3.current!.srcObject = stream;
+      peerFace3.current!.id = username;
+      // if(peerInfo.isHost){
+      //   peerFace3.current!.classList.add("border-8")
+      // }
     } else if (userCount.current === 4) {
-      peerFace4.current.srcObject = stream;
-      peerFace4.current.id = username;
+      div5.current!.classList.remove("hidden");
+      peerFace4.current!.classList.remove("hidden");
+      div6.current!.classList.add("hidden");
+      peerFace5.current!.classList.add("hidden");
+      peerFace4.current!.srcObject = stream;
+      peerFace4.current!.id = username;
+      // if(peerInfo.isHost){
+      //   peerFace4.current!.classList.add("border-8")
+      // }
     } else if (userCount.current === 5) {
-      peerFace5.current.srcObject = stream;
-      peerFace5.current.id = username;
+      div6.current!.classList.remove("hidden");
+      peerFace5.current!.classList.remove("hidden");
+      peerFace5.current!.srcObject = stream;
+      peerFace5.current!.id = username;
+      // if(peerInfo.isHost){
+      //   peerFace5.current!.classList.add("border-8")
+      // }
     }
 
     userCount.current += 1;
@@ -547,14 +699,69 @@ const WebRTC = ({
     if (userCount.current >= 2) {
       const username = event.currentTarget.id;
 
-      // console.log("모달용 데이터 닉?", username);
-      const { data } = await axios({
+      // // console.log("모달용 데이터 닉?", username);
+      // const { data } = await axios({
+      //   url: `https://i8e201.p.ssafy.io/api/user/info/${username}`,
+      //   headers: {
+      //     accessToken: `${accessToken}`,
+      //   },
+      // });
+      // console.log("모달용 데이터?", data);
+      // dispatch(changeNavAlarmReviewEmojiUserData(data));
+      // dispatch(showRoomUserProfile());
+      // // setUserProfileData(data);
+      // // dispatch(isRtcLoading(false));
+
+      axios({
         url: `https://i8e201.p.ssafy.io/api/user/info/${username}`,
+        headers: {
+          accessToken: `${accessToken}`,
+        },
+      }).then((r) => {
+        //토큰이상해
+        if ("401" === r.data.status) {
+          //토큰 재요청
+          console.log("토큰 이상함");
+          const refreshToken = localStorage.getItem("refreshToken");
+          const Username = localStorage.getItem("Username");
+          axios({
+            method: "get",
+            url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+            headers: {
+              refreshToken: refreshToken,
+            },
+          }).then((r) => {
+            //재발급 실패
+            if ("401" === r.data.status) {
+              localStorage.clear();
+              toast.error("인증되지 않은 유저입니다");
+              navigate("/");
+            }
+            //재발급 성공
+            else {
+              console.log("재발급 성공", r.data.accessToken);
+              localStorage.setItem("accessToken", r.data.accessToken);
+              accessToken = r.data.accessToken;
+              //원래 axios 실행
+              axios({
+                url: `https://i8e201.p.ssafy.io/api/user/info/${username}`,
+                headers: {
+                  accessToken: `${accessToken}`,
+                },
+              }).then((r) => {
+                dispatch(changeNavAlarmReviewEmojiUserData(r.data));
+                dispatch(showRoomUserProfile());
+              });
+            }
+          });
+        }
+        //토큰 정상이야
+        else {
+          //실행 결과값 그대로 실행
+          dispatch(changeNavAlarmReviewEmojiUserData(r.data));
+          dispatch(showRoomUserProfile());
+        }
       });
-      console.log("모달용 데이터?", data);
-      setUserProfileData(data);
-      // dispatch(isRtcLoading(false));
-      dispatch(showRoomUserProfile());
     }
   };
   // ---------------- 게임 관련 --------------------
@@ -594,9 +801,50 @@ const WebRTC = ({
       }, 1000);
     });
 
+    // 손병호 게임 시그널받기
+    socket.on("game_son_signal", (signalData) => {
+      transitionDiv.current!.classList.add("opacity-0");
+      console.log("시그널 gameWebRTC에서 받았냐?", signalData);
+      setTimeout(() => {
+        transitionDiv.current!.classList.remove("opacity-0");
+      }, 1000);
+    });
+
+    // 스무고개 시그널 받기
+    socket.on("game_twenty_signal", (signalData) => {
+      transitionDiv.current!.classList.add("opacity-0");
+      console.log("twenty : 시그널 gameWebRTC에서 받았냐?", signalData);
+      setTimeout(() => {
+        transitionDiv.current!.classList.remove("opacity-0");
+      }, 1000);
+    });
+
+    // 밸런스 게임 시그널받기
+    socket.on("game_balance_Intro", (isBalance) => {
+      console.log("WebRTC에서 roomName에서 받았나?", isBalance);
+      dispatch(balanceChange(isBalance));
+    });
+
+    // 밸런스 게임 시그널받기
+    socket.on("game_balance_typeChange", (choiceType) => {
+      if (choiceType === "EXIT") {
+        dispatch(isRomanNormalChange(null));
+      } else {
+        dispatch(isRomanNormalChange(choiceType));
+      }
+      console.log("choiceType?", choiceType);
+    });
+
+    // 밸런스 게임 테마별 질문 변경
+    socket.on("game_balance_subjectChange", (themeDataList) => {
+      dispatch(balanceQuestionChange(themeDataList));
+    });
+
     return () => {
       socket.off("game_select");
       socket.off("game_back_select");
+      socket.off("game_son_signal");
+      socket.off("game_twenty_signal");
     };
   }, []);
 
@@ -623,36 +871,48 @@ const WebRTC = ({
               socket={socket}
             />
           )}
-          {count && (
-            <div className="bg-orange-500 bg-opacity-30 flex justify-center z-20 items-center fixed top-0 right-0 bottom-0 left-0">
-              <div className="text-7xl font-bold text-white">{count}</div>
+          {count ? (
+            <div className=" bg-black bg-opacity-70 flex flex-col justify-center z-20 items-center fixed top-0 right-0 bottom-0 left-0">
+              <img src={jjanImg} alt="jjan" />
+              <div className="text-7xl font-bold text-white fixed top-28 z-30">
+                {count}
+              </div>
             </div>
-          )}
-          <div className="text-white w-full min-h-[85vh] flex justify-center">
-            <div className="flex flex-col justify-evenly items-center">
+          ) : null}
+          <div className="text-white w-full min-h-[85vh] flex justify-evenly">
+            <div className="flex flex-col justify-evenly items-center ">
               {/* <div className="flex flex-wrap justify-evenly items-center p-24"> */}
               {/* 내 비디오 공간 */}
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div1}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] flex items-center "
+              >
                 <video
-                  className="h-[17rem]"
+                  className="object-fill"
                   ref={myFace}
                   playsInline
                   autoPlay
                 ></video>
               </div>
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div3}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] items-center hidden"
+              >
                 <video
                   onClick={showUserProfile}
-                  className=" h-[17rem] cursor-pointer"
+                  className="object-fill cursor-pointer"
                   ref={peerFace2}
                   playsInline
                   autoPlay
                 ></video>
               </div>
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div5}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] items-center hidden"
+              >
                 <video
                   onClick={showUserProfile}
-                  className=" h-[17rem] cursor-pointer"
+                  className="object-fill cursor-pointer"
                   ref={peerFace4}
                   playsInline
                   autoPlay
@@ -663,7 +923,7 @@ const WebRTC = ({
 
             <div
               ref={transitionDiv}
-              className="flex justify-center items-center min-w-fit w-[47vw] overflow-hidden mt-5 border-2 border-blue-400 rounded-[20px] transition-all duration-1000 opacity-0"
+              className="flex justify-center items-center min-w-fit w-[47vw] overflow-hidden mt-5 rounded-[20px] transition-all duration-1000 opacity-0"
             >
               {/* {pochaUsers && <LadderIntro socket={socket} pochaId={pochaId} pochaUsers={pochaUsers}/>} */}
               {isGameSelect && <GameSelect socket={socket} pochaId={pochaId} />}
@@ -676,32 +936,70 @@ const WebRTC = ({
                     />
                   )
                 : null}
+              {selectedId === "son"
+                ? pochaUsers && <SonIntro socket={socket} pochaId={pochaId} />
+                : null}
+              {selectedId === "bal"
+                ? pochaUsers && (
+                    <Balance
+                      socket={socket}
+                      pochaId={pochaId}
+                      pochaUsers={pochaUsers}
+                    />
+                  )
+                : null}
+              {selectedId === "liar"
+                ? pochaUsers && (
+                    <LiarIntro
+                      socket={socket}
+                      pochaId={pochaId}
+                      pochaUsers={pochaUsers}
+                    />
+                  )
+                : null}
+              {selectedId === "call"
+                ? pochaUsers && <CallIntro socket={socket} pochaId={pochaId} />
+                : null}
+              {selectedId === "twenty"
+                ? pochaUsers && (
+                    <TwentyIntro socket={socket} pochaId={pochaId} />
+                  )
+                : null}
             </div>
 
             {/* 사람 공간 */}
             <div className="flex flex-col justify-evenly items-center">
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div2}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] flex items-center "
+              >
                 <video
                   onClick={showUserProfile}
-                  className=" h-[17rem] cursor-pointer"
+                  className="object-fill cursor-pointer"
                   ref={peerFace1}
                   playsInline
                   autoPlay
                 ></video>
               </div>
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div4}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] items-center hidden"
+              >
                 <video
                   onClick={showUserProfile}
-                  className=" h-[17rem] cursor-pointer"
+                  className="object-fill cursor-pointer"
                   ref={peerFace3}
                   playsInline
                   autoPlay
                 ></video>
               </div>
-              <div className="rounded-[1rem] overflow-hidden h-[15rem] flex items-center ">
+              <div
+                ref={div6}
+                className="rounded-[1rem] overflow-hidden h-[15rem] w-[28rem] items-center hidden"
+              >
                 <video
                   onClick={showUserProfile}
-                  className=" h-[17rem] cursor-pointer"
+                  className="object-fill cursor-pointer"
                   ref={peerFace5}
                   playsInline
                   autoPlay
@@ -713,28 +1011,54 @@ const WebRTC = ({
             <div className="flex w-fit text-white">
               {/* 뮤트 */}
               <button
-                className="border-2 px-3"
+                className="p-3 w-16"
                 onClick={handleMuteClick}
                 ref={muteBtn}
               >
-                🔊
+                {muted ? (
+                  <img
+                    className=""
+                    src={require("src/assets/roomIcon/offmic.png")}
+                    alt="offmic"
+                  />
+                ) : (
+                  <img
+                    className=""
+                    src={require("src/assets/roomIcon/onmic.png")}
+                    alt="mic"
+                  />
+                )}
               </button>
               {/* 카메라 */}
               <button
-                className="border-2 px-3"
+                className="p-3 w-16"
                 onClick={handleCameraClick}
                 ref={cameraBtn}
               >
-                Camera Off
+                {cameraOff ? (
+                  <img
+                    className=""
+                    src={require("src/assets/roomIcon/offcamera.png")}
+                    alt="offcamera"
+                  />
+                ) : (
+                  <img
+                    className=""
+                    src={require("src/assets/roomIcon/oncamera.png")}
+                    alt="onmic"
+                  />
+                )}
               </button>
               {/* 카메라 옵션 */}
-              <select
-                className="text-black"
-                onInput={handleCameraChange}
-                ref={cameraSelect}
-              >
-                {optionList}
-              </select>
+              <div className="h-6 pt-6 mx-5">
+                <select
+                  className="text-black"
+                  onInput={handleCameraChange}
+                  ref={cameraSelect}
+                >
+                  {optionList}
+                </select>
+              </div>
             </div>
           </div>
         </>

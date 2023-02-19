@@ -22,36 +22,110 @@ import MainCreateRoomCarousel from "./MainCreateRoomCarousel";
 import Tag from "./Tag";
 
 function Main(): JSX.Element {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch();
-  const [myState,setMyState] = useState<any>({ age: 0, region:'전국', gender: '',})
+  const [myState, setMyState] = useState<any>({
+    age: 0,
+    region: "전국",
+    gender: "",
+  });
   const mainCreateRoomList: any = useAppSelector((state) => {
     return state.mainCreateRoomList;
   });
 
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   // 메인 페이지 들어올 시 현재 Username에 대한 유저정보 저장
+  const userName = localStorage.getItem("Username");
   useEffect(() => {
-    const userName = localStorage.getItem("Username");
-    axios
-      .get(`https://i8e201.p.ssafy.io/api/user/myinfo/${userName}`)
+    
+    axios({
+      method:'get',
+      url:`https://i8e201.p.ssafy.io/api/user/myinfo/${userName}`,
+      headers: {
+        accessToken: `${accessToken}`,
+      },
+    })
       .then((r) => {
-        localStorage.setItem("userId", r.data.data.userId);
-        console.log('나의 데이터',r.data.data)
-        const now:any = new Date
-        const myData:any = r.data.data
-        const birth:string[] = myData.birth.split('.')
-        let age:number 
-        if (Number(birth[1]) > now.getMonth()) {
-          age = Math.floor((now.getFullYear() - Number(birth[0])-1)/10)*10
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            console.log('Tag의 57번줄: ', r.data.status);
+            
+              // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+            } else {
+              // 엑세스 토큰 추가
+              localStorage.setItem("accessToken", r.data.accessToken);
+              // 재요청
+              axios({
+                method:'get',
+                url:`https://i8e201.p.ssafy.io/api/user/myinfo/${userName}`,
+                headers: {
+                  accessToken: `${r.data.accessToken}`,
+                },
+              }).then((r)=> {
+                localStorage.setItem("userId", r.data.data.userId);
+                console.log("나의 데이터", r.data.data);
+                const now: any = new Date();
+                const myData: any = r.data.data;
+                const birth: string[] = myData.birth.split(".");
+                let age: number;
+                if (Number(birth[1]) > now.getMonth()) {
+                  age =
+                    Math.floor((now.getFullYear() - Number(birth[0]) - 1) / 10) * 10;
+                } else {
+                  age = Math.floor((now.getFullYear() - Number(birth[0])) / 10) * 10;
+                }
+                // console.log('내 나이는?',age)
+                localStorage.setItem("age", `${age}`);
+                localStorage.setItem("region", `${myData.region}`);
+                localStorage.setItem("gender", `${myData.gender}`);
+                setMyState((preState: any) => {
+                  return {
+                    ...preState,
+                    age: age,
+                    region: myData.region,
+                    gender: myData.gender,
+                  };
+                });
+              })
+            }
+          })
         } else {
-          age = Math.floor((now.getFullYear() - Number(birth[0]))/10)*10
+          localStorage.setItem("userId", r.data.data.userId);
+          console.log("나의 데이터", r.data.data);
+          const now: any = new Date();
+          const myData: any = r.data.data;
+          const birth: string[] = myData.birth.split(".");
+          let age: number;
+          if (Number(birth[1]) > now.getMonth()) {
+            age =
+              Math.floor((now.getFullYear() - Number(birth[0]) - 1) / 10) * 10;
+          } else {
+            age = Math.floor((now.getFullYear() - Number(birth[0])) / 10) * 10;
+          }
+          // console.log('내 나이는?',age)
+          localStorage.setItem("age", `${age}`);
+          localStorage.setItem("region", `${myData.region}`);
+          localStorage.setItem("gender", `${myData.gender}`);
+          setMyState((preState: any) => {
+            return {
+              ...preState,
+              age: age,
+              region: myData.region,
+              gender: myData.gender,
+            };
+          });
         }
-        // console.log('내 나이는?',age)
-        localStorage.setItem('age',`${age}`)
-        localStorage.setItem('region',`${myData.region}`)
-        localStorage.setItem('gender',`${myData.gender}`)
-        setMyState((preState:any)=> {
-          return {...preState, age: age, region: myData.region, gender:myData.gender}
-        })
       });
   }, []);
 
@@ -73,13 +147,13 @@ function Main(): JSX.Element {
       toast.success("방에서 나오셨습니다");
       setTimeout(() => {
         localStorage.removeItem("reloadExit");
-      }, 500)
+      }, 500);
     }
     if (localStorage.getItem("reloadBan")) {
       toast.error("방에서 강퇴당하셨습니다");
       setTimeout(() => {
         localStorage.removeItem("reloadBan");
-      }, 500)
+      }, 500);
     }
   }, []);
 
@@ -139,9 +213,7 @@ function Main(): JSX.Element {
       {menuFriendChatClickCheck ? <FriendChat /> : null}
 
       {/* 포차+ 클릭에 따른 테마선택 캐러셀 보이기 */}
-      {mainCreateRoomCarouselCheck ? (
-        <MainCreateRoomCarousel onClickHiddenBtn={onClickHiddenBtn} />
-      ) : null}
+      {mainCreateRoomCarouselCheck ? <MainCreateRoomCarousel /> : null}
 
       {/* 선택한 테마에 따른 방만들기 셋팅 */}
       {createThemeRoomCheck !== 0 ? (
@@ -173,28 +245,29 @@ function Main(): JSX.Element {
           <div
             className="grid mx-auto min-w-f"
             style={{
-              gridTemplateRows: "20rem 1fr 3rem",
+              gridTemplateRows: "25rem 1fr 3rem",
               backgroundColor: "rgb(25, 25, 25)",
             }}
           >
             {/* 태그 */}
-            <div className="grid" style={{ gridTemplateRows: "12rem 8rem" }}>
+            <div className="grid" style={{ gridTemplateRows: "12rem 1fr" }}>
               <div></div>
               <Tag />
             </div>
             {/* 방 보이기 */}
             <div
-              className="grid grid-cols-1 w-full min-w-[75rem]"
+              className={`${styles.binggrae} grid grid-cols-1 w-full min-w-[75rem]`}
               style={{ backgroundColor: "rgb(25, 25, 25)" }}
             >
-              <Room mainCreateRoomList={mainCreateRoomList} myState={myState}/>
+              <Room mainCreateRoomList={mainCreateRoomList} myState={myState} />
             </div>
           </div>
           <div></div>
         </div>
 
         {/* 방 생성 버튼 */}
-        <div
+        {/* Tag 컴포넌트로 이동 */}
+        {/* <div
           ref={createBtn}
           onClick={() => {
             dispatch(changeCarouselState());
@@ -208,7 +281,7 @@ function Main(): JSX.Element {
             alt=""
             className="w-1/6 min-w-1/6"
           />
-        </div>
+        </div> */}
 
         {/* 메뉴 클릭시 보이기 */}
         <NavbarMenu />
@@ -221,9 +294,10 @@ function Main(): JSX.Element {
 export default Main;
 
 function Room({ mainCreateRoomList, myState }: any): JSX.Element {
-
-  console.log('생성된 방 리스트: ',mainCreateRoomList)
+  console.log("생성된 방 리스트: ", mainCreateRoomList);
   const navigate = useNavigate();
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   // 내 아이디
   const username = localStorage.getItem("Username");
   // ssulTitle가 null일 경우 랜덤하게 넣어줄 문구
@@ -243,77 +317,229 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
   const enterRoom = async (event: React.MouseEvent<HTMLDivElement>, e: any) => {
     const pochaId = event.currentTarget.id;
     // console.log('클릭한 포차 데이터: ', e);
-    
+
     // console.log('포차 아이디',pochaId)
     // console.log('나의 데이터: ',myState)
-    const themeId = e.themeId.slice(0,2) 
-    const age = e.age
-    const region = e.region
-    const isPrivate = e.isPrivate
-    const limitUser = e.limitUser
-    const totalCount = e.totalCount
-    const maleCount = e.maleCount
-    const femaleCount = e.femaleCount
-    const isWaiting = e.isWaiting
-    console.log(isPrivate,limitUser,totalCount,maleCount,femaleCount, isWaiting);
+    const themeId = e.themeId.slice(0, 2);
+    const age = e.age;
+    const region = e.region;
+    const isPrivate = e.isPrivate;
+    const limitUser = e.limitUser;
+    const totalCount = e.totalCount;
+    const maleCount = e.maleCount;
+    const femaleCount = e.femaleCount;
+    const isWaiting = e.isWaiting;
+    console.log(
+      isPrivate,
+      limitUser,
+      totalCount,
+      maleCount,
+      femaleCount,
+      isWaiting
+    );
     // { age: 0, region:'전국', gender: '',}
     // 헌팅방 입장
-    if (themeId === 'T2') {
+    if (themeId === "T2") {
+      console.log(themeId);
       // 나이,지역,잠금,총인원수,성비 체크
-      if ((myState.gender === 'M')&&(age===0 || age===myState.age) && (region === '전국' || region === myState.region) &&
-        (limitUser > totalCount) && (limitUser/2 >maleCount)) {
-          axios({
-            method: 'post',
-            url: 'https://i8e201.p.ssafy.io/api/pocha/enter',
-            data: {
-              isHost: false,
-              pochaId: pochaId,
-              username: username,
-            }
-          }).then(()=> {
-            navigate(`/meetingroom/${pochaId}`);
-          })
-        } else if ((myState.gender === 'F')&&(age===0 || age===myState.age) && (region === '전국' || region === myState.region) &&
-        (limitUser > totalCount) && (limitUser/2 >femaleCount)) {
-          axios({
-            method: 'post',
-            url: 'https://i8e201.p.ssafy.io/api/pocha/enter',
-            data: {
-              isHost: false,
-              pochaId: pochaId,
-              username: username,
-            }
-          }).then(()=> {
-            navigate(`/meetingroom/${pochaId}`);
-          })
-        } else {
-          toast.error('입장할 수 없는 방입니다')
-        }
-
-    } else {
-        // 소통&게임방
-        // 나이,지역,잠금,총인원수 체크
-        if ((age===0 || age===myState.age) && (region === '전국' || region === myState.region) 
-          && (isPrivate === false) && (limitUser > totalCount)) {
+      // 미팅방 입장 유저가 남자일 경우
+      if (
+        myState.gender === "M" &&
+        (age === 0 || age === myState.age) &&
+        (region === "전국" || region === myState.region) &&
+        limitUser > totalCount &&
+        limitUser / 2 > maleCount &&
+        isWaiting
+      ) {
+        axios({
+          method: "post",
+          url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+          data: {
+            isHost: false,
+            pochaId: pochaId,
+            username: username,
+          },
+          headers: {
+            accessToken: `${accessToken}`,
+          }
+        }).then((r) => {
+          // 실패시
+          if (r.data.status === '401') {
             axios({
-              method: 'post',
-              url: 'https://i8e201.p.ssafy.io/api/pocha/enter',
-              data: {
-                isHost: false,
-                pochaId: pochaId,
-                username: username,
+              method: 'get',
+              url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+              headers: {
+                refreshToken: `${refreshToken}`,
               }
-            }).then(()=> {
-              if (themeId === 'T0') {
-                navigate(`/storyroom/${pochaId}`);
-              } else if (themeId === 'T1') {
-                  navigate(`/gameroom/${pochaId}`);
-                } 
+            }).then((r)=> {
+                // 돌려보내기
+                if (r.data.status === '401') {
+                  localStorage.clear();
+                  toast.error('인증되지 않은 유저입니다')
+                  navigate('/')
+                } else {
+                  // 엑세스 토큰 추가
+                  localStorage.setItem("accessToken", r.data.accessToken);
+                  // 재요청
+                  axios({
+                    method: "post",
+                    url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                    data: {
+                      isHost: false,
+                      pochaId: pochaId,
+                      username: username,
+                    },
+                    headers: {
+                      accessToken: `${r.data.accessToken}`,
+                    }
+                  }).then(()=> {
+                    navigate(`/meetingroom/${pochaId}`);
+                  })
+                }
             })
-        } else {
-          toast.error('입장할 수 없는 방입니다')
-        }
-      
+          } else {
+            // 토큰이 있다면
+            navigate(`/meetingroom/${pochaId}`);
+          }
+        })
+        // 미팅 포차 클릭한 사람이 여자일 경우
+      } else if (
+        myState.gender === "F" &&
+        (age === 0 || age === myState.age) &&
+        (region === "전국" || region === myState.region) &&
+        limitUser > totalCount &&
+        limitUser / 2 > femaleCount &&
+        isWaiting
+      ) {
+        axios({
+          method: "post",
+          url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+          data: {
+            isHost: false,
+            pochaId: pochaId,
+            username: username,
+          },
+          headers: {
+            accessToken: `${accessToken}`,
+          }
+        }).then((r) => {
+            console.log(r.data)
+            // 실패시
+            if (r.data.status === '401') {
+              axios({
+                method: 'get',
+                url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+                headers: {
+                  refreshToken: `${refreshToken}`,
+                }
+              }).then((r)=> {
+                console.log('Tag의 57번줄: ', r.data.status);
+                
+                  // 돌려보내기
+                if (r.data.status === '401') {
+                  localStorage.clear();
+                  toast.error('인증되지 않은 유저입니다')
+                  navigate('/')
+                } else {
+                  // 엑세스 토큰 추가
+                  localStorage.setItem("accessToken", r.data.accessToken);
+                  // 재요청
+                  axios({
+                    method: "post",
+                    url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                    data: {
+                      isHost: false,
+                      pochaId: pochaId,
+                      username: username,
+                    },
+                    headers: {
+                      accessToken: `${r.data.accessToken}`,
+                    }
+                  }).then(()=> {
+                    navigate(`/meetingroom/${pochaId}`);
+                  })
+                }
+              })
+            } else {
+              // 토큰이 있다면
+              navigate(`/meetingroom/${pochaId}`);
+            }
+          })
+      } else {
+        // 그 외의 방
+        toast.error("입장할 수 없는 방입니다");
+      }
+    } else {
+      // 소통&게임방
+      // 나이,지역,잠금,총인원수 체크
+      if (
+        (age === 0 || age === myState.age) &&
+        (region === "전국" || region === myState.region) &&
+        isPrivate === false &&
+        limitUser > totalCount
+      ) {
+        axios({
+          method: "post",
+          url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+          data: {
+            isHost: false,
+            pochaId: pochaId,
+            username: username,
+          },
+          headers: {
+            accessToken: `${accessToken}`,
+          }
+        }).then((r) => {
+          if (r.data.status === '401') {
+            axios({
+              method: 'get',
+              url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+              headers: {
+                refreshToken: `${refreshToken}`,
+              }
+            }).then((r)=> {
+              console.log('Tag의 57번줄: ', r.data.status);
+              
+                // 돌려보내기
+              if (r.data.status === '401') {
+                localStorage.clear();
+                toast.error('인증되지 않은 유저입니다')
+                navigate('/')
+              } else {
+                // 엑세스 토큰 추가
+                localStorage.setItem("accessToken", r.data.accessToken);
+                // 재요청
+                axios({
+                  method: "post",
+                  url: "https://i8e201.p.ssafy.io/api/pocha/enter",
+                  data: {
+                    isHost: false,
+                    pochaId: pochaId,
+                    username: username,
+                  },
+                  headers: {
+                    accessToken: `${r.data.accessToken}`,
+                  }
+                }).then(()=> {
+                  if (themeId === "T0") {
+                    navigate(`/storyroom/${pochaId}`);
+                  } else if (themeId === "T1") {
+                    navigate(`/gameroom/${pochaId}`);
+                  }
+                })
+              }
+            })
+          } else {
+            if (themeId === "T0") {
+              navigate(`/storyroom/${pochaId}`);
+            } else if (themeId === "T1") {
+              navigate(`/gameroom/${pochaId}`);
+            }
+          }
+        });
+      } else {
+        toast.error("입장할 수 없는 방입니다");
+      }
     }
   };
 
@@ -336,7 +562,9 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
 
     // 썰 타이틀 없을 시 랜덤 타이틀
     let SSulTitle = randomTitleList[e.pochaId % 10];
+    let IsRealSsul = false;
     if (typeof e.ssulTitle !== "object") {
+      IsRealSsul = true;
       SSulTitle = e.ssulTitle;
     }
 
@@ -347,6 +575,7 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
           style={{ gridTemplateColumns: "2.5rem 1fr 2.5rem" }}
         >
           <div></div>
+
           {/* 카드 내부 */}
           <div
             onClick={(event) => {
@@ -366,6 +595,7 @@ function Room({ mainCreateRoomList, myState }: any): JSX.Element {
               alcohol={e.alcohol}
               totalCount={e.totalCount}
               limitUser={e.limitUser}
+              IsRealSsul={IsRealSsul}
             />
           </div>
           <div></div>

@@ -9,6 +9,7 @@ function AdminLogin(): React.ReactElement {
   const navigate = useNavigate();
   const [ID, setID] = useState();
   const [PASSWORD, setPASSWORD] = useState();
+  const Username = localStorage.getItem("Username");
 
   const ChangeID = (event: any) => {
     console.log(event.target.value);
@@ -52,6 +53,8 @@ function AdminLogin(): React.ReactElement {
               onClick={() => {
                 console.log(ID);
                 console.log(PASSWORD);
+                let accessToken = localStorage.getItem("accessToken");
+
                 axios({
                   method: "post",
                   url: `https://i8e201.p.ssafy.io/api/login`,
@@ -59,35 +62,57 @@ function AdminLogin(): React.ReactElement {
                     username: ID,
                     password: PASSWORD,
                   },
+                  headers: {
+                    accessToken: accessToken,
+                  },
                 }).then((r) => {
-                  console.log("r.data", r.data);
-                  const Info = r.data;
-                  if (Info.status === "200") {
-                    console.log(
-                      "이전 accessToken",
-                      localStorage.getItem("accessToken")
-                    );
-                    localStorage.setItem("accessToken", Info.accessToken);
-                    const newlocalaccess = localStorage.getItem("accessToken");
-                    console.log(
-                      "이전이랑 같나요 엑세스?",
-                      newlocalaccess === Info.accessToken
-                    );
-
-                    console.log(
-                      "이전 refreshToken",
-                      localStorage.getItem("refreshToken")
-                    );
-                    localStorage.setItem("refreshToken", Info.refreshToken);
-                    const newlocalrefresh =
-                      localStorage.getItem("refreshToken");
-                    console.log(
-                      "이전이랑 같나요? 리프레쉬",
-                      newlocalrefresh === Info.refreshToken
-                    );
-                    navigate("/adminmain");
-                  } else {
-                    toast.warning("로그인실패");
+                  if ("401" === r.data.status) {
+                    //토큰 재요청
+                    const refreshToken = localStorage.getItem("refreshToken");
+                    axios({
+                      method: "get",
+                      url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+                      headers: {
+                        refreshToken: refreshToken,
+                      },
+                    }).then((r) => {
+                      //재발급 실패
+                      if ("401" === r.data.status) {
+                        localStorage.clear();
+                        toast.error("인증되지 않은 유저입니다");
+                        navigate("/");
+                      }
+                      //재발급 성공
+                      else {
+                        localStorage.setItem("accessToken", r.data.accessToken);
+                        accessToken = r.data.accessToken;
+                        axios({
+                          method: "post",
+                          url: `https://i8e201.p.ssafy.io/api/login`,
+                          data: {
+                            username: ID,
+                            password: PASSWORD,
+                          },
+                          headers: {
+                            accessToken: accessToken,
+                          },
+                        }).then((r) => {
+                          if ("200" === r.data.status) {
+                            navigate("/adminmain");
+                          } else {
+                            toast.warning("로그인실패");
+                          }
+                        });
+                      }
+                    });
+                  }
+                  //토큰 정상이야
+                  else {
+                    if ("200" === r.data.status) {
+                      navigate("/adminmain");
+                    } else {
+                      toast.warning("로그인실패");
+                    }
                   }
                 });
               }}

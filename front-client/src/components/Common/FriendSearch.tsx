@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {useState, useRef} from 'react'
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAppDispatch } from 'src/store/hooks';
 import { changeFriendSearchState } from 'src/store/store';
@@ -7,13 +8,16 @@ import styles from './Common.module.css'
 
 function FriendSearch(): JSX.Element {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const [chat,setChat] = useState()
   const searchFriend = useRef<any>()
-
+  const userName = localStorage.getItem("Username");
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   return (
     <div>
       <div
-        className={`bg-slate-800 bg-opacity-50 fixed  w-full h-full text-white`}
+        className={`bg-slate-800 bg-opacity-50 fixed  w-full h-full text-white z-10`}
         ref={searchFriend}
         onClick={(e)=> {
           if (e.target === searchFriend.current) {
@@ -44,23 +48,88 @@ function FriendSearch(): JSX.Element {
                         data: {
                           nickname: chat,
                           username: username
-                        }
+                        },
+                        headers: {
+                          accessToken: `${accessToken}`,
+                        },
                       })
                       .then((r)=> {
-                        console.log('요청받은 데이터: ',r.data.message)
-                        const msg = r.data.message
-                        if (msg === 'checkNickname') {
-                          toast.error("닉네임을 한번 더 확인해주세요");
-                        } else if (msg === 'isFriend') {
-                          toast.error(`이미 ${chat}님과 친구입니다`);
-                        } else if (msg === 'isFriend') {
-                          toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                        if (r.data.status === '401') {
+                          axios({
+                            method: 'get',
+                            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+                            headers: {
+                              refreshToken: `${refreshToken}`,
+                            }
+                          }).then((r)=> {
+                            // 돌려보내기
+                            if (r.data.status === '401') {
+                              localStorage.clear();
+                              toast.error('인증되지 않은 유저입니다')
+                              navigate('/')
+                            } else {
+                              // 엑세스 토큰 추가
+                              localStorage.setItem("accessToken", r.data.accessToken);
+                              // 재요청
+                              axios({
+                                method: 'post',
+                                url: `https://i8e201.p.ssafy.io/api/user/friend/request/${username}/${chat}`,
+                                data: {
+                                  nickname: chat,
+                                  username: username
+                                },
+                                headers: {
+                                  accessToken: `${r.data.accessToken}`,
+                                },
+                              }).then((r)=> {
+                                console.log('요청받은 데이터: ',r.data.message)
+                                const msg = r.data.message
+                                if (msg === 'checkNickname') {
+                                  toast.error("닉네임을 한번 더 확인해주세요");
+                                } else if (msg === 'isFriend') {
+                                  toast.error(`이미 ${chat}님과 친구입니다`);
+                                } else if (msg === 'isFriend') {
+                                  toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                                } else {
+                                  toast.success(`${chat}님께 요청을 보냈습니다`);
+                                  setTimeout(() => {
+                                    dispatch(changeFriendSearchState(false))
+                                  }, 100);
+                                }
+                              })
+                            }
+                          })
                         } else {
-                          toast.success(`${chat}님께 요청을 보냈습니다`);
-                          setTimeout(() => {
-                            dispatch(changeFriendSearchState(false))
-                          }, 100);
+                          // 토큰에 변화가 없을 경우
+                          console.log('요청받은 데이터: ',r.data.message)
+                          const msg = r.data.message
+                          if (msg === 'checkNickname') {
+                            toast.error("닉네임을 한번 더 확인해주세요");
+                          } else if (msg === 'isFriend') {
+                            toast.error(`이미 ${chat}님과 친구입니다`);
+                          } else if (msg === 'isFriend') {
+                            toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                          } else {
+                            toast.success(`${chat}님께 요청을 보냈습니다`);
+                            setTimeout(() => {
+                              dispatch(changeFriendSearchState(false))
+                            }, 100);
+                          }
                         }
+                        // console.log('요청받은 데이터: ',r.data.message)
+                        // const msg = r.data.message
+                        // if (msg === 'checkNickname') {
+                        //   toast.error("닉네임을 한번 더 확인해주세요");
+                        // } else if (msg === 'isFriend') {
+                        //   toast.error(`이미 ${chat}님과 친구입니다`);
+                        // } else if (msg === 'isFriend') {
+                        //   toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                        // } else {
+                        //   toast.success(`${chat}님께 요청을 보냈습니다`);
+                        //   setTimeout(() => {
+                        //     dispatch(changeFriendSearchState(false))
+                        //   }, 100);
+                        // }
                       })
                     }  
                   }}
@@ -74,23 +143,87 @@ function FriendSearch(): JSX.Element {
                         data: {
                           nickname: chat,
                           username: username
-                        }
+                        },
+                        headers: {
+                          accessToken: `${accessToken}`,
+                        },
                       })
                       .then((r)=> {
-                        console.log('요청받은 데이터: ',r.data.message)
-                        const msg = r.data.message
-                        if (msg === 'checkNickname') {
-                          toast.error("닉네임을 한번 더 확인해주세요");
-                        } else if (msg === 'isFriend') {
-                          toast.error(`이미 ${chat}님과 친구입니다`);
-                        } else if (msg === 'isFriend') {
-                          toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                        if (r.data.status === '401') {
+                          axios({
+                            method: 'get',
+                            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${userName}`,
+                            headers: {
+                              refreshToken: `${refreshToken}`,
+                            }
+                          }).then((r)=> {
+                            // 돌려보내기
+                            if (r.data.status === '401') {
+                              localStorage.clear();
+                              toast.error('인증되지 않은 유저입니다')
+                              navigate('/')
+                            } else {
+                              // 엑세스 토큰 추가
+                              localStorage.setItem("accessToken", r.data.accessToken);
+                              // 재요청
+                              axios({
+                                method: 'post',
+                                url: `https://i8e201.p.ssafy.io/api/user/friend/request/${username}/${chat}`,
+                                data: {
+                                  nickname: chat,
+                                  username: username
+                                },
+                                headers: {
+                                  accessToken: `${r.data.accessToken}`,
+                                },
+                              }).then((r)=> {
+                                console.log('요청받은 데이터: ',r.data.message)
+                                const msg = r.data.message
+                                if (msg === 'checkNickname') {
+                                  toast.error("닉네임을 한번 더 확인해주세요");
+                                } else if (msg === 'isFriend') {
+                                  toast.error(`이미 ${chat}님과 친구입니다`);
+                                } else if (msg === 'isFriend') {
+                                  toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                                } else {
+                                  toast.success(`${chat}님께 요청을 보냈습니다`);
+                                  setTimeout(() => {
+                                    dispatch(changeFriendSearchState(false))
+                                  }, 100);
+                                }
+                              })
+                            }
+                          })
                         } else {
-                          toast.success(`${chat}님께 요청을 보냈습니다`);
-                          setTimeout(() => {
-                            dispatch(changeFriendSearchState(false))
-                          }, 100);
+                          console.log('요청받은 데이터: ',r.data.message)
+                          const msg = r.data.message
+                          if (msg === 'checkNickname') {
+                            toast.error("닉네임을 한번 더 확인해주세요");
+                          } else if (msg === 'isFriend') {
+                            toast.error(`이미 ${chat}님과 친구입니다`);
+                          } else if (msg === 'isFriend') {
+                            toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                          } else {
+                            toast.success(`${chat}님께 요청을 보냈습니다`);
+                            setTimeout(() => {
+                              dispatch(changeFriendSearchState(false))
+                            }, 100);
+                          }
                         }
+                        // console.log('요청받은 데이터: ',r.data.message)
+                        // const msg = r.data.message
+                        // if (msg === 'checkNickname') {
+                        //   toast.error("닉네임을 한번 더 확인해주세요");
+                        // } else if (msg === 'isFriend') {
+                        //   toast.error(`이미 ${chat}님과 친구입니다`);
+                        // } else if (msg === 'isFriend') {
+                        //   toast.error(`이미 ${chat}님께 요청을 보냈습니다`);
+                        // } else {
+                        //   toast.success(`${chat}님께 요청을 보냈습니다`);
+                        //   setTimeout(() => {
+                        //     dispatch(changeFriendSearchState(false))
+                        //   }, 100);
+                        // }
                       })
                 }}
                 >요청 보내기</span></div>

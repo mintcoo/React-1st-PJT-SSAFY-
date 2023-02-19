@@ -1,3 +1,13 @@
+@font-face {
+  font-family: 'Binggrae';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Binggrae.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+.binggrae {
+  font-family: 'Binggrae';
+}
+
 .hideScroll::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera*/
 }
@@ -25,8 +35,6 @@
 .hidden {
   display: none;
 }
-
-
 
 
 .cancelBtn {
@@ -75,3 +83,26 @@
     opacity: 1;
   }
 }
+
+@keyframes twinkle_alarm {
+  0% {
+    transform: rotate(-10deg);
+  } 
+  25%{
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  } 
+  75% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-10deg);
+  }
+}
+
+.twinkleAlarm {
+  animation: twinkle_alarm 1s linear infinite;;
+}
+

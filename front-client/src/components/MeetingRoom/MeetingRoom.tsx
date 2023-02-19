@@ -1,20 +1,26 @@
-import RoomMeetingFooterNav from "../Common/RoomMeetingFooterNav";
+import RoomFooterNav from "../Common/RoomFooterNav";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { isRtcLoading, showRoomUserProfile } from "../../store/store";
 import RoomUserProfile from "../Common/RoomUserProfile";
 import Loading from "../Common/Loading";
 import styles from "./MeetingRoom.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import MeetingWebRTC from "../WebRTC/MeetingWebRTC";
 import WaitingRoom from "../Common/WaitingRoom";
-import RoomFooterNav from "../Common/RoomFooterNav";
-
+import FriendSearch from "../Common/FriendSearch";
+import NavUserEmojiClickModal from "../Common/NavUserEmojiClickModal";
+import AudioPlayer from "react-h5-audio-player";
+import "react-h5-audio-player/lib/styles.css";
+import { toast } from "react-toastify";
 const socket = io("https://pocha.online");
 
 function MeetingRoom(): JSX.Element {
+  const navigate = useNavigate();
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
   // const dispatch = useAppDispatch();
   const { PochaId } = useParams();
   // const [socket, setSocket] = useState<any>(null);
@@ -26,6 +32,19 @@ function MeetingRoom(): JSX.Element {
   // 본인 정보 가져오기
   const [myInfo, setMyInfo] = useState<any>(null);
 
+  // 친구 요청 검색 모달
+  const friendSearchState = useAppSelector((state) => {
+    return state.friendSearchState;
+  });
+
+  const RoomUserProfileClickCheck: any = useAppSelector((state: any) => {
+    return state.RoomUserProfileClickCheck;
+  });
+
+  const navAlarmReviewEmojiUserData: any = useAppSelector((state: any) => {
+    return state.navAlarmReviewEmojiUserData;
+  });
+
   // 방장 여부
   const [isHost, setIsHost] = useState<boolean>(false);
 
@@ -33,28 +52,136 @@ function MeetingRoom(): JSX.Element {
     setIsHost(isHost);
   };
 
+  const [play, setPlay] = useState<boolean>(true);
+
+  const player = useRef<any>();
+  const Player = () => (
+    <AudioPlayer
+      ref={player}
+      autoPlay={play}
+      src="/RoomBGM/Meeting.mp3"
+      onPlay={(e) => console.log("onPlay")}
+      style={{ display: "none" }}
+      volume={0.2}
+      // other props here
+    />
+  );
+
+  // 배경음 끄고 켜기 관련
+  const onClickPlayer = () => {
+    setPlay((prev) => !prev);
+  }
+
   const getPochaInfo = async () => {
-    try {
-      const { data } = await axios({
-        url: `https://i8e201.p.ssafy.io/api/pocha/${Number(PochaId)}`,
-      });
-      setPochaInfo(data.data);
-    } catch (error) {
-      console.log("포차 정보 받아오기", error);
-    }
+    await axios({
+      url: `https://i8e201.p.ssafy.io/api/pocha/${Number(PochaId)}`,
+      headers: {
+        accessToken: `${accessToken}`,
+      },
+    }).then((r) => {
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        console.log("토큰 이상함");
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
+        axios({
+          method: "get",
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
+        }).then((r) => {
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            console.log("재발급 성공", r.data.accessToken);
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              url: `https://i8e201.p.ssafy.io/api/pocha/${Number(PochaId)}`,
+              headers: {
+                accessToken: `${accessToken}`,
+              },
+            }).then((r) => {
+              setPochaInfo(r.data.data.data);
+            });
+          }
+        });
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        setPochaInfo(r.data.data.data);
+      }
+    });
   };
 
   const getMyInfo = async () => {
-    try {
-      const { data } = await axios({
-        url: `https://i8e201.p.ssafy.io/api/user/myinfo/${localStorage.getItem(
-          "Username"
-        )}`,
-      });
-      setMyInfo({ username: data.data.username, nickname: data.data.nickname });
-    } catch (error) {
-      console.log("내 정보 가져오기 ", error);
-    }
+    await axios({
+      url: `https://i8e201.p.ssafy.io/api/user/myinfo/${localStorage.getItem(
+        "Username"
+      )}`,
+      headers: {
+        accessToken: `${accessToken}`,
+      },
+    }).then((r) => {
+      //토큰이상해
+      if ("401" === r.data.status) {
+        //토큰 재요청
+        console.log("토큰 이상함");
+        const refreshToken = localStorage.getItem("refreshToken");
+        const Username = localStorage.getItem("Username");
+        axios({
+          method: "get",
+          url: `https://i8e201.p.ssafy.io/api/user/auth/refresh/${Username}`,
+          headers: {
+            refreshToken: refreshToken,
+          },
+        }).then((r) => {
+          //재발급 실패
+          if ("401" === r.data.status) {
+            localStorage.clear();
+            toast.error("인증되지 않은 유저입니다");
+            navigate("/");
+          }
+          //재발급 성공
+          else {
+            console.log("재발급 성공", r.data.accessToken);
+            localStorage.setItem("accessToken", r.data.accessToken);
+            accessToken = r.data.accessToken;
+            //원래 axios 실행
+            axios({
+              url: `https://i8e201.p.ssafy.io/api/user/myinfo/${localStorage.getItem(
+                "Username"
+              )}`,
+              headers: {
+                accessToken: `${accessToken}`,
+              },
+            }).then((r) => {
+              setMyInfo({
+                username: r.data.data.data.username,
+                nickname: r.data.data.data.nickname,
+              });
+            });
+          }
+        });
+      }
+      //토큰 정상이야
+      else {
+        //실행 결과값 그대로 실행
+        setMyInfo({
+          username: r.data.data.data.username,
+          nickname: r.data.data.data.nickname,
+        });
+      }
+    });
   };
 
   //const test = io("https://pocha.online")
@@ -84,6 +211,7 @@ function MeetingRoom(): JSX.Element {
 
   return (
     <>
+      {<Player />}
       {socket == null || myInfo == null ? (
         <div></div>
       ) : isWaiting ? (
@@ -97,12 +225,23 @@ function MeetingRoom(): JSX.Element {
         <div
           className={`w-screen min-h-screen ${styles.gameroomimg} bg-cover bg-no-repeat bg-center bg-scroll`}
         >
+          {friendSearchState ? <FriendSearch /> : null}
+          {RoomUserProfileClickCheck ? (
+            <RoomUserProfile
+              userData={navAlarmReviewEmojiUserData}
+              pochaId={String(PochaId)}
+              isHost={isHost}
+              socket={socket}
+            />
+          ) : null}
+
           {/* 화면 및 게임 공간 */}
           <div className="h-[90%]">
             <MeetingWebRTC
               pochaId={PochaId!}
               socket={socket}
               propIsHost={propIsHost}
+              pochaInfo={pochaInfo}
               getPochaInfo={getPochaInfo}
             />
           </div>
@@ -113,6 +252,7 @@ function MeetingRoom(): JSX.Element {
                 pochaId={PochaId!}
                 socket={socket}
                 isHost={isHost}
+                onClickPlayer={onClickPlayer}
               />
             )}
           </div>
