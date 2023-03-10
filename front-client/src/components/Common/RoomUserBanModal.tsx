@@ -1,31 +1,81 @@
 import axios from "axios";
-import { useRef } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import { showRoomUserBanModal } from "../../store/store";
+import { showRoomUserBanModal, showRoomUserProfile } from "../../store/store";
+import { toast } from "react-toastify";
 import styles from "./RoomUserProfile.module.css";
+import { useNavigate } from "react-router-dom";
 
-const RoomUserBanModal = ({ userData }: { userData: any }) => {
+const RoomUserBanModal = ({ userData, pochaId, socket }: { userData: any, pochaId: string, socket: any }) => {
   let dispatch = useAppDispatch();
-  const { nickname } = userData.data;
-  const bgDiv = useRef<any>();
+  const navigate = useNavigate()
+  const { nickname, username } = userData.data;
+  const pochaID = Number(pochaId);
+  const roomName = pochaId;
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
+  // console.log(' 유유유저데이터j', userData);
   // 강퇴하는 함수
   const banUser = async () => {
     try {
-      const bban = await axios({
+      await axios({
         method: "PUT",
         url: "https://i8e201.p.ssafy.io/api/pocha/exit",
         data: {
           isHost: true,
-          pochaId: 0,
-          username: "string",
+          pochaId: pochaID,
+          username: username,
           waiting: true,
         },
-      });
-      console.log("bban", bban);
+        headers: {
+          accessToken: `${accessToken}`,
+        },
+      }).then((r)=> {
+        // 토큰 갱신 필요
+        if (r.data.status === '401') {
+          axios({
+            method: 'get',
+            url:`https://i8e201.p.ssafy.io/api/user/auth/refresh/${username}`,
+            headers: {
+              refreshToken: `${refreshToken}`,
+            }
+          }).then((r)=> {
+            // 돌려보내기
+            if (r.data.status === '401') {
+              localStorage.clear();
+              toast.error('인증되지 않은 유저입니다')
+              navigate('/')
+            } else {
+              // 엑세스 토큰 추가
+              localStorage.setItem("accessToken", r.data.accessToken);
+              // 재요청 
+              axios({
+                method: "PUT",
+                url: "https://i8e201.p.ssafy.io/api/pocha/exit",
+                data: {
+                  isHost: true,
+                  pochaId: pochaID,
+                  username: username,
+                  waiting: true,
+                },
+                headers: {
+                  accessToken: `${r.data.accessToken}`,
+                },
+              }).then((r)=>{
+                socket.emit("ban", roomName, username);
+                toast.success(`${nickname}을 강퇴하였습니다`);
+              })
+            }
+          })
+        } else {
+          socket.emit("ban", roomName, username);
+          toast.success(`${nickname}을 강퇴하였습니다`);
+        }
+      })
     } catch (error) {
-      console.log(error);
+      console.log("강퇴에러", error);
     }
     dispatch(showRoomUserBanModal());
+    dispatch(showRoomUserProfile());
   };
 
   // 취소 클릭시 모달 끄는 함수
@@ -35,8 +85,7 @@ const RoomUserBanModal = ({ userData }: { userData: any }) => {
 
   return (
     <div
-      ref={bgDiv}
-      className="bg-slate-800 bg-opacity-50 flex justify-center z-10 items-center absolute top-0 right-0 bottom-0 left-0"
+      className="bg-slate-800 bg-opacity-50 flex justify-center z-20 items-center absolute top-0 right-0 bottom-0 left-0"
     >
       <div className="bg-black px-16 pt-14 pb-7 rounded-md text-center">
         <div className="text-xl mb-4 font-bold text-white">

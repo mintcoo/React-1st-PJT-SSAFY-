@@ -1,24 +1,29 @@
+import axios from "axios";
+import { log } from "console";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
-import axios from "axios";
-import { url } from "inspector";
-
+// test지워도됨
 function Login(): React.ReactElement {
   const navigate = useNavigate();
   // 아래 처럼 하면 되는데.. 중간에 오류저거 못고치겠어서 우선 any
   // const scrollDivRef = useRef<HTMLDivElement>(null);
 
   // DOM들 접근
-  const scrollDivRef = useRef<any>(null);
-  const firstDiv = useRef<any>(null);
-  const secondDiv = useRef<any>(null);
-  const wordFirst = useRef<any>(null);
-  const wordSecond = useRef<any>(null);
-  const wordThird = useRef<any>(null);
-  const wordFourth = useRef<any>(null);
-  const wordFifth = useRef<any>(null);
+  const scrollDivRef = useRef<HTMLDivElement>(null);
+  const firstDiv = useRef<HTMLDivElement>(null);
+  const secondDiv = useRef<HTMLDivElement>(null);
+  const wordFirst = useRef<HTMLDivElement>(null);
+  const wordSecond = useRef<HTMLDivElement>(null);
+  const wordThird = useRef<HTMLDivElement>(null);
+  const wordFourth = useRef<HTMLDivElement>(null);
+  const wordFifth = useRef<HTMLDivElement>(null);
   const elements = [wordFourth, wordFifth];
+
+  // 위에서 클릭시
+  const onClickFirstScroll = () => {
+    secondDiv.current?.scrollIntoView({ behavior: "smooth" });
+  }
 
   // 마우스 윌 이벤트 발생시
   const onWheelScroll = (event: any) => {
@@ -30,21 +35,21 @@ function Login(): React.ReactElement {
     // 마우스 아래와 위일때 조건
     if (deltaY > 0) {
       // console.log("123", deltaY, scrollTop, pageHeight);
-      secondDiv.current.scrollIntoView({ behavior: "smooth" });
-      secondDiv.current.classList.toggle(`delay-300`);
-      wordSecond.current.classList.toggle(`delay-500`);
-      wordThird.current.classList.toggle(`delay-1000`);
+      secondDiv.current?.scrollIntoView({ behavior: "smooth" });
+      secondDiv.current?.classList.toggle(`delay-300`);
+      wordSecond.current?.classList.toggle(`delay-500`);
+      wordThird.current?.classList.toggle(`delay-1000`);
       elements.forEach((element) => {
-        element.current.classList.toggle(`delay-[1300ms]`);
+        element.current?.classList.toggle(`delay-[1300ms]`);
       });
     } else if (deltaY < 0) {
       // console.log("456", deltaY, scrollTop, pageHeight);
-      firstDiv.current.scrollIntoView({ behavior: "smooth" });
-      wordSecond.current.classList.toggle(`delay-500`);
-      secondDiv.current.classList.toggle(`delay-300`);
-      wordThird.current.classList.toggle(`delay-1000`);
+      firstDiv.current?.scrollIntoView({ behavior: "smooth" });
+      wordSecond.current?.classList.toggle(`delay-500`);
+      secondDiv.current?.classList.toggle(`delay-300`);
+      wordThird.current?.classList.toggle(`delay-1000`);
       elements.forEach((element) => {
-        element.current.classList.toggle(`delay-[1300ms]`);
+        element.current?.classList.toggle(`delay-[1300ms]`);
       });
     }
   };
@@ -72,7 +77,7 @@ function Login(): React.ReactElement {
     );
 
     elements.forEach((element) => {
-      observer.observe(element.current);
+      observer.observe(element.current!);
     });
   }, []);
 
@@ -80,6 +85,7 @@ function Login(): React.ReactElement {
     <div
       ref={scrollDivRef}
       onWheel={onWheelScroll}
+      onClick={onClickFirstScroll}
       className={`${styles.bgImg} ${styles.fontHanSans} w-screen h-screen bg-scroll overflow-y-hidden`}
     >
       <div className="bg-black bg-opacity-50 w-full">
@@ -125,6 +131,7 @@ function Login(): React.ReactElement {
           >
             방구석포차
           </div>
+          {/* <img src={require("src/assets/logo/5.png")} alt="logo" /> */}
           <div
             className="w-2/12 mt-10 cursor-pointer"
             // 밑 주석 지우지 말 것
@@ -132,10 +139,16 @@ function Login(): React.ReactElement {
               // eslint-disable-next-line no-restricted-globals
               location.href =
                 "https://nid.naver.com/oauth2.0/authorize?client_id=ZQnQO8XghTL7eTyln27j&redirect_uri=https://i8e201.p.ssafy.io/api/user/oauth2/token/naver&response_type=code";
+              // axios({
+              //   method: "post",
+              //   url: "https://nid.naver.com/oauth2.0/authorize?client_id=ZQnQO8XghTL7eTyln27j&redirect_uri=https://i8e201.p.ssafy.io/api/user/oauth2/token/naver&response_type=code",
+              // }).then((r) => {
+              //   console.log(r);
+              // });
             }}
           >
             <img
-              src={require("../../assets/loginIcon/naver.png")}
+              src={require("src/assets/loginIcon/naver.png")}
               alt="login-naver"
             />
           </div>

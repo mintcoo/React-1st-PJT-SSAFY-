@@ -1,10 +1,12 @@
-/* @font-face {
-  font-family: 'NanumGothic';
-  src: url('../../assets/font/NanumGothic.ttf');
+@font-face {
+  font-family: 'Binggrae';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Binggrae.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
 }
-.NanumGothic {
-  font-family: "NanumGothic";
-} */
+.binggrae {
+  font-family: 'Binggrae';
+}
 
 .hideScroll::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera*/
@@ -12,7 +14,7 @@
 
 .neonDefault {
   color: #fff;
-  box-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px;
+  box-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff;
   z-index: 50;
 }
 
@@ -21,19 +23,19 @@
   transition: all 0.4s ;
 }
 
-.neon:hover {
-  box-shadow: 0 0 5px #ffa0cf, 0 0 10px #f661ac, 0 0 20px #fa2f94, 0 0 30px #ff0280, 0 0 40px;
-  /* z-index: ; */
+.isHover{
+  transition: all 0.5s;
 }
+
+/* .neon:hover {
+  box-shadow: 0px 0px 3px #fff201, 1px 1px 20px #E47200, -1px -1px 20px #E47200, 1px -1px 60px #FF321A;
+} */
+
 
 .hidden {
   display: none;
 }
 
-
-.radiusbottom {
-  border-radius: 0px 0px 16px 16px;
-}
 
 .cancelBtn {
   /* background: rgba(248, 248, 248, 0.185); */
@@ -59,3 +61,48 @@
   transform: scale(1.18);
   z-index: 100;
 }
+
+.myemoji {
+  animation: 3s infinite alternate sliedin;
+}
+
+@keyframes sliedin {
+  10% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  70% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes twinkle_alarm {
+  0% {
+    transform: rotate(-10deg);
+  } 
+  25%{
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  } 
+  75% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-10deg);
+  }
+}
+
+.twinkleAlarm {
+  animation: twinkle_alarm 1s linear infinite;;
+}
+

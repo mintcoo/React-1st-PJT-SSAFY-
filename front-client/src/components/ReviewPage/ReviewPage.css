@@ -1,0 +1,59 @@
+.hideScroll::-webkit-scrollbar {
+  display: none; 
+  /* Chrome, Safari, Opera*/
+}
+
+.nickNameNeon {
+  transition: all 0.5s;
+  color: white;
+  font-weight: bold;
+}
+
+.nickNameNeon:hover {
+  color: #6185EE;
+  font-weight: bold;
+}
+
+.reviewpage{
+  transition: all 0.5s;
+}
+
+.reviewpage:hover {
+  color: rgb(247, 195, 239);
+  text-shadow: 0 0 3px #b85188,
+              0 0 7px #FF3E84;
+}
+
+
+.blink {
+  animation: 3s infinite alternate sliedin;
+}
+
+.textblack{
+  color: rgb(0, 0, 0);
+}
+
+@keyframes sliedin {
+  from {
+    font-weight: 200;
+  }
+  to {
+    color: #e19a6a;
+    font-weight: 800;
+  }
+}
+
+.reviewClick {
+  transition: all 0.7s;
+  border-bottom: groove 4px #6185EE;
+  color: #6185EE;
+  font-weight: bold;
+  opacity: 1;
+}
+.reviewdefault {
+  transition: all 0.7s;
+  border-bottom: groove 4px #FFFFFF;
+  color: #FFFFFF;
+  opacity: 0.5;
+}
+

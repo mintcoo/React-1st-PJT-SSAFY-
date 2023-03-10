@@ -1,0 +1,56 @@
+
+
+.cancelBtn {
+  /* background: rgba(248, 248, 248, 0.185); */
+  color: white;
+  background-color: black;
+  box-shadow: 0 0 5px rgba(255, 51, 51, 0.5),
+              0 0 10px rgba(255, 51, 51, 0.5),
+              0 0 15px rgba(255, 51, 51, 0.5);
+
+  transition: all 0.4s;
+  border: groove 2px none;
+}
+
+.cancelBtn:hover {
+  color: rgba(249, 249, 249, 0.5);
+  font-size: 0.95rem;
+}
+
+.tagBtn {
+  border: solid 1px #FFEE58;
+  box-shadow: 0 0 5px #a97000,
+              0 0 10px #c78400;
+  transition: all 0.4s;
+  border: groove 2px none;
+}
+
+.selectBtn {
+  color: #272727;
+  background-color: blue;
+}
+
+.tagSelect {
+  background-color: rgb(25, 25, 25);
+  -webkit-appearance:none; /* 크롬 화살표 없애기 */
+  -moz-appearance:none; /* 파이어폭스 화살표 없애기 */
+  appearance:none; /* 화살표 없애기 */
+  transition: all 0.5s;
+}
+
+.tagSelect:focus {
+  color: #272727;
+  background-color: #FFEE58;
+}
+
+.tagFixed {
+  transition: all 0.5s;
+}
+.tagFixed:hover {
+  color: #5E2F00;
+  font-size: 1.3rem;
+  transition: all 0.3s;
+  text-shadow: 0 0 5px #a97000,
+              0 0 10px #c78400;
+
+}

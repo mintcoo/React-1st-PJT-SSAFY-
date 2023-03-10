@@ -10,9 +10,9 @@ import RoomUserBanModal from "./RoomUserBanModal";
 import RoomUserFriendModal from "./RoomUserFriendModal";
 import RoomUserReportModal from "./RoomUserReportModal";
 
-const RoomUserProfile = ({ userData }: { userData: any }) => {
+const RoomUserProfile = ({ userData, pochaId, isHost, socket }: { userData: any, pochaId: string, isHost?: boolean, socket: any }) => {
   let dispatch = useAppDispatch();
-  let { manner, gender, birth, region } = userData.data;
+  let { manner, gender, birth, region, comment, profile } = userData.data;
   const { nickname } = userData.data;
   // 백그라운드 div
   const bgDiv = useRef<any>();
@@ -31,14 +31,42 @@ const RoomUserProfile = ({ userData }: { userData: any }) => {
     "text-green-500",
     "text-blue-500",
   ];
+  // 친추 묻는 모달 띄우기
+  const clickAddFriend = () => {
+    dispatch(roomAddFriendModalState());
+  };
+  // 강퇴 묻는 모달 띄우기
+  const clickBanUser = () => {
+    dispatch(showRoomUserBanModal());
+  };
+  // 신고창 모달 띄우기
+  const clickReportUser = () => {
+    dispatch(showRoomUserReportModal());
+  };
 
+  console.log(isHost,"방장?**********************")
   // 유저 아래 친추, 강퇴, 신고하기 등
-  const userInfoFootIcons = [
-    require("../../assets/roomIcon/add-user.png"),
-    require("../../assets/roomIcon/exclamation-mark.png"),
-    require("../../assets/roomIcon/report.png"),
-  ];
-  const userInfoFootTitle = ["친구신청", "강퇴하기", "신고하기"];
+  // 이벤트핸들러들 [친추, 강퇴, 신고]
+  let userInfoFootIcons : any[];
+  let userInfoFootTitle : string[];
+  let handlers: any[] = [];
+  if (isHost) {
+    userInfoFootIcons = [
+      require("../../assets/roomIcon/add-user.png"),
+      require("../../assets/roomIcon/exclamation-mark.png"),
+      require("../../assets/roomIcon/report.png"),
+    ];
+    userInfoFootTitle = ["친구신청", "강퇴하기", "신고하기"];
+    handlers = [clickAddFriend, clickBanUser, clickReportUser];
+  } else {
+    userInfoFootIcons = [
+      require("../../assets/roomIcon/add-user.png"),
+      require("../../assets/roomIcon/report.png"),
+    ];
+    userInfoFootTitle = ["친구신청", "신고하기"];
+    handlers = [clickAddFriend, clickReportUser];
+  }
+
 
   // 유저 정보
   const userInfosData = userDataReBuild();
@@ -46,6 +74,8 @@ const RoomUserProfile = ({ userData }: { userData: any }) => {
   // 유저 정보 데이터 재가공 함수
   function userDataReBuild() {
     const date: any = new Date();
+    //매너온도 가공
+    manner = (manner).toFixed(1) + "℃"
     // 성별 데이터 다시 가공
     if (gender === "F") {
       gender = "여자";
@@ -74,22 +104,7 @@ const RoomUserProfile = ({ userData }: { userData: any }) => {
     }
   }
 
-  // 친추 묻는 모달 띄우기
-  const clickAddFriend = () => {
-    dispatch(roomAddFriendModalState());
-  };
-  // 강퇴 묻는 모달 띄우기
-  const clickBanUser = () => {
-    dispatch(showRoomUserBanModal());
-  };
-  // 신고창 모달 띄우기
-  const clickReportUser = () => {
-    dispatch(showRoomUserReportModal());
-  };
-
-  // 이벤트핸들러들 [친추, 강퇴, 신고]
-  const handlers = [clickAddFriend, clickBanUser, clickReportUser];
-
+ 
   // 친구추가 확인 모달 상태 체크
   const roomAddFriendModalCheck = useAppSelector((state) => {
     return state.roomAddFriendModalCheck;
@@ -110,20 +125,20 @@ const RoomUserProfile = ({ userData }: { userData: any }) => {
       {roomAddFriendModalCheck ? (
         <RoomUserFriendModal userData={userData} />
       ) : null}
-      {RoomUserBanClickCheck ? <RoomUserBanModal userData={userData} /> : null}
+      {RoomUserBanClickCheck ? <RoomUserBanModal userData={userData} pochaId={pochaId} socket={socket} /> : null}
       {RoomUserReportClickCheck ? <RoomUserReportModal userData={userData} /> : null}
       <div
         ref={bgDiv}
         onMouseDown={CloseProfileModal}
-        className={`bg-slate-800 bg-opacity-50 fixed w-full h-full text-white`}
+        className={`z-10 bg-slate-800 bg-opacity-50 fixed top-0 right-0 bottom-0 left-0 flex justify-center items-center text-white`}
       >
         <div
-          className={`min-w-[24rem] bg-black w-[20%] px-10 pt-10 pb-5 rounded-3xl relative top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`}
+          className={`min-w-[24rem] bg-black px-10 pt-10 pb-5 rounded-3xl `}
         >
           <div className={`w-full h-24 flex justify-center items-center`}>
             <img
-              className={`h-full`}
-              src={require("../../assets/myPage/sunglassEmoji.png")}
+              className={`h-full object-fill rounded-full h-[6rem] w-[6rem]`}
+              src={profile}
               alt="sunglass"
             />
           </div>
@@ -131,7 +146,7 @@ const RoomUserProfile = ({ userData }: { userData: any }) => {
             <div>{nickname}</div>
           </div>
           <div className={`w-full h-10 text-lg`}>
-            #ISFP #자바칩모카 #스파이패밀리
+            {comment}
           </div>
           <div className={`flex h-32 my-12 justify-evenly`}>
             {userInfosData.map((info, index) => {

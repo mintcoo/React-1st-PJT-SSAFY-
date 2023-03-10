@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+<title>Websocket ChatRoom</title>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+	integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+	crossorigin="anonymous">
+<style>
+</style>
+</head>
+<body>
+	<div class="container" id="app">
+		<div>
+			<h2>채팅</h2>
+		</div>
+		<div class="input-group">
+			<div class="input-group-prepend">
+				<label class="input-group-text">내용</label>
+			</div>
+			<input type="text" class="form-control" id ="content"
+				onkeyup="if(window.event.keyCode==13){(sendMessage())}">
+			<div class="input-group-append">
+				<button class="btn btn-primary" type="button" onclick="sendMessage()">보내기</button>
+			</div>
+		</div>
+		<table id="conversation" class="table table-striped">
+			<thead>
+				<tr>
+					<th>Greetings</th>
+				</tr>
+			</thead>
+			<tbody id="greetings">
+			</tbody>
+		</table>
+		<div></div>
+	</div>
+	<!-- JavaScript -->
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+	<script>
+    var sock = new SockJS("/api/ws/chat");
+	var ws = Stomp.over(sock);
+	var chat_id = "";
+	var user_id = "";
+
+	
+	function input() {
+		  user_id = prompt("user_id 입력", "");
+		  chat_id = prompt("chat_id 입력", "");
+	}
+    // vue.js
+/*     var vm = new Vue({
+        el: '#app',
+        data: {
+			content: '',
+        },
+        created() {
+        	this.findChat();
+        },
+        methods: {
+            findChat: function() {
+                axios.get('/api/user/friend/chat/'+ 6).then(response => { response.data.data.map(x => showGreeting(x)) });
+            },
+            sendMessage: function() {
+                ws.send("/pub/chat/message", {}, JSON.stringify({chat_id:this.chat_id, user_id:this.user_id, content:this.content}));
+                this.content = '';
+            },
+        }
+    }); */
+    
+    
+    function findChat() {
+    	axios.get('/api/user/friend/chat/'+ chat_id ).then(response => { response.data.data.map(x => showGreeting(x)) });
+    	console.log("findChat" + chat_id);
+    }
+    
+    function sendMessage() {
+    	const content = document.getElementById('content').value;
+    	ws.send("/pub/chat/message", {}, JSON.stringify({chat_id:chat_id, user_id:user_id, content:content}));
+    	document.getElementById('content').value = "";
+    }
+    
+    function connect() {
+        ws.connect({}, function(frame) {
+            ws.subscribe("/sub/chat/"+ chat_id, function(message) {
+            	showGreeting(JSON.parse(message.body))
+           	});
+        });
+    };
+    
+    
+    function showGreeting(message) {
+        $("#greetings").append("<tr><td>"+message.user_nickname + ":" + message.content + "</td></tr>");
+    }
+    
+    input();
+    findChat();
+    connect();
+</script>
+</body>
+</html>
